@@ -1,7 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 module EquivariantSet where
 
@@ -11,12 +13,15 @@ import Data.Semigroup (Semigroup)
 
 import Orbit
 
--- Given a nominal type, we can construct equivariant sets
--- These simply use a set data structure from prelude
--- This works well because orbits are uniquely represented
--- Note that functions such as toList do not return an ordered
--- list since the representatives are chosen arbitrarily.
--- TODO: think about folds (and size)
+-- TODO: think about folds (the monoids should be nominal?)
+-- TODO: partition / fromList / ...
+
+-- Given a nominal type, we can construct equivariant sets. These simply use a
+-- standard set data structure. This works well because orbits are uniquely
+-- represented. Although internally it is just a set of orbits, the interface
+-- will always work directly with elements. This way we model infinite sets.
+-- Note that functions such as toList do not return an ordered list since the
+-- representatives are chosen arbitrarily.
 newtype EquivariantSet a = EqSet { unEqSet :: Set (Orb a) }
 
 -- Need undecidableIntances for this
@@ -29,14 +34,27 @@ deriving instance Show (Orb a) => Show (EquivariantSet a)
 deriving instance Ord (Orb a) => Monoid (EquivariantSet a)
 deriving instance Ord (Orb a) => Semigroup (EquivariantSet a)
 
+-- We could derive a correct instance if I had written generic instances.
+-- Didn't do that yet, but a direct instance is also nice.
+instance Orbit (EquivariantSet a) where
+  newtype Orb (EquivariantSet a) = OrbEqSet (EquivariantSet a)
+  toOrbit = OrbEqSet
+  support _ = Set.empty
+  getElement (OrbEqSet x) _ = x
+  index _ = 0
+
+deriving instance Show (Orb a) => Show (Orb (EquivariantSet a))
+deriving instance Eq (Orb a) => Eq (Orb (EquivariantSet a))
+deriving instance Ord (Orb a) => Ord (Orb (EquivariantSet a))
+
 
 -- Query
 
 null :: EquivariantSet a -> Bool
 null = Set.null . unEqSet
 
-size :: EquivariantSet a -> Int
-size = Set.size . unEqSet
+orbits :: EquivariantSet a -> Int
+orbits = Set.size . unEqSet
 
 member :: (Orbit a, Ord (Orb a)) => a -> EquivariantSet a -> Bool
 member a = Set.member (toOrbit a) . unEqSet
@@ -71,7 +89,7 @@ difference a b = EqSet $ Set.difference (unEqSet a) (unEqSet b)
 intersection :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 intersection a b = EqSet $ Set.intersection (unEqSet a) (unEqSet b)
 
--- This is the meat of the file!
+-- This is the meat of the file! Relies on the ordering of Orbit.product
 product :: (Orbit a, Orbit b) => EquivariantSet a -> EquivariantSet b -> EquivariantSet (a, b)
 product (EqSet sa) (EqSet sb) = EqSet . Set.fromDistinctAscList . concat
                               $ Orbit.product <$> Set.toAscList sa <*> Set.toAscList sb

@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module EquivariantMap where
 
@@ -14,8 +14,17 @@ import qualified Data.Map as Map
 import EquivariantSet (EquivariantSet(EqSet))
 import Orbit
 
--- Very similar to EquivariantSet
--- Some of the notes there apply here too
+-- TODO: foldable / traversable
+-- TODO: adjust / alter / update
+-- TODO: -WithKey functions
+-- TODO: don't export the helper functions
+-- TODO: cleanup (usage of getElelemtE is not necessary)
+-- TODO: replace [Bool] by Vec Bool if better?
+
+-- Very similar to EquivariantSet, but then the map analogue. The important
+-- thing is that we have to store which values are preserved under a map. This
+-- is done with the list of bit vector. Otherwise, it is an orbit-wise
+-- representation, just like sets.
 newtype EquivariantMap k v = EqMap { unEqMap :: Map (Orb k) (Orb v, [Bool]) }
 
 -- Need undecidableIntances for this
@@ -27,23 +36,18 @@ deriving instance (Show (Orb k), Show (Orb v)) => Show (EquivariantMap k v)
 deriving instance Ord (Orb k) => Monoid (EquivariantMap k v)
 deriving instance Ord (Orb k) => Semigroup (EquivariantMap k v)
 
--- TODO: foldable / traversable
--- TODO: adjust / alter / update
--- TODO: *WithKey functions
-
--- Some helper functions
--- TODO: don't export these
+-- Helper functions
 
 mapel :: (Orbit k, Orbit v) => k -> v -> (Orb v, [Bool])
 mapel k v = (toOrbit v, bv (Set.toAscList (support k)) (Set.toAscList (support v)))
 
 bv :: [Rat] -> [Rat] -> [Bool]
 bv l [] = replicate (length l) False
-bv [] l = undefined -- Non-equivariant function
+bv [] l = error "Non-equivariant function"
 bv (x:xs) (y:ys) = case compare x y of
   LT -> False : bv xs (y:ys)
   EQ -> True : bv xs ys
-  GT -> undefined -- Non-equivariant function
+  GT -> error "Non-equivariant function"
 
 mapelInv :: (Orbit k, Orbit v) => k -> (Orb v, [Bool]) -> v
 mapelInv x (oy, bv) = getElement oy (Set.fromAscList . fmap fst . Prelude.filter snd $ zip (Set.toAscList (support x)) bv)
