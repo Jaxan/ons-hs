@@ -12,6 +12,7 @@ import qualified Data.Set as Set
 import Data.Semigroup (Semigroup)
 
 import Orbit
+import Support
 
 -- TODO: think about folds (the monoids should be nominal?)
 -- TODO: partition / fromList / ...
@@ -39,7 +40,7 @@ deriving instance Ord (Orb a) => Semigroup (EquivariantSet a)
 instance Orbit (EquivariantSet a) where
   newtype Orb (EquivariantSet a) = OrbEqSet (EquivariantSet a)
   toOrbit = OrbEqSet
-  support _ = Set.empty
+  support _ = Support.empty
   getElement (OrbEqSet x) _ = x
   index _ = 0
 
@@ -109,7 +110,8 @@ filter f (EqSet s) = EqSet . Set.filter (f . getElementE) $ s
 map :: (Orbit a, Orbit b, Ord (Orb b)) => (a -> b) -> EquivariantSet a -> EquivariantSet b
 map f = EqSet . Set.map (toOrbit . f . getElementE) . unEqSet
 
--- f should also preserve order!
+-- f should also preserve order on the orbit types!
+-- This means you should know the representation to use it well
 mapMonotonic :: (Orbit a, Orbit b) => (a -> b) -> EquivariantSet a -> EquivariantSet b
 mapMonotonic f = EqSet . Set.mapMonotonic (toOrbit . f . getElementE) . unEqSet
 

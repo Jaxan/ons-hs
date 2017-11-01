@@ -13,6 +13,7 @@ import qualified Data.Map as Map
 
 import EquivariantSet (EquivariantSet(EqSet))
 import Orbit
+import Support
 
 -- TODO: foldable / traversable
 -- TODO: adjust / alter / update
@@ -39,7 +40,7 @@ deriving instance Ord (Orb k) => Semigroup (EquivariantMap k v)
 -- Helper functions
 
 mapel :: (Orbit k, Orbit v) => k -> v -> (Orb v, [Bool])
-mapel k v = (toOrbit v, bv (Set.toAscList (support k)) (Set.toAscList (support v)))
+mapel k v = (toOrbit v, bv (Support.toList (support k)) (Support.toList (support v)))
 
 bv :: [Rat] -> [Rat] -> [Bool]
 bv l [] = replicate (length l) False
@@ -50,7 +51,7 @@ bv (x:xs) (y:ys) = case compare x y of
   GT -> error "Non-equivariant function"
 
 mapelInv :: (Orbit k, Orbit v) => k -> (Orb v, [Bool]) -> v
-mapelInv x (oy, bv) = getElement oy (Set.fromAscList . fmap fst . Prelude.filter snd $ zip (Set.toAscList (support x)) bv)
+mapelInv x (oy, bv) = getElement oy (Support.fromDistinctAscList . fmap fst . Prelude.filter snd $ zip (Support.toList (support x)) bv)
 
 
 -- Query

@@ -5,27 +5,13 @@
 
 module Orbit where
 
-import Data.Set (Set)
-import qualified Data.Set as Set
+import Support (Support, Rat(..))
+import qualified Support
 
 -- TODO: Make generic instances (we already have sums and products)
 -- TODO: For products: replace [Ordering] with Vec Ordering if better
 -- TODO: replace Support by an ordered vector / list for speed?
 
-
--- We take some model of the dense linear order. The rationals are a natural
--- choice. (Note that every countable model is order-isomorphic, so it doesn't
--- matter so much in the end.) I wrap it in a newtype, so we will only use the
--- Ord instances, and because it's not very nice to work with type synonyms.
--- Show instance included for debugging.
-newtype Rat = Rat { unRat :: Rational }
-  deriving (Eq, Ord, Show)
-
-
--- A support is a set of rational numbers, which can always be ordered. Can
--- also be represented as sorted list/vector. Maybe I should also make it into
--- a newtype.
-type Support = Set Rat
 
 -- This is the main meat of the package. The Orbit typeclass, it gives us ways
 -- to manipulate nominal elements in sets and maps. The type class has
@@ -48,7 +34,7 @@ class Orbit a where
 
 -- We can get 'default' values, if we don't care about the support.
 getElementE :: Orbit a => Orb a -> a
-getElementE orb = getElement orb (Set.fromAscList . fmap (Rat . toRational) $ [1 .. index orb])
+getElementE orb = getElement orb (Support.def (index orb))
 
 
 -- We can construct orbits from rational numbers. There is exactly one orbit,
@@ -56,10 +42,8 @@ getElementE orb = getElement orb (Set.fromAscList . fmap (Rat . toRational) $ [1
 instance Orbit Rat where
   data Orb Rat = OrbRational
   toOrbit _ = OrbRational
-  support r = Set.singleton r
-  getElement _ s
-    | Set.null s = undefined
-    | otherwise = Set.findMin s
+  support r = Support.singleton r
+  getElement _ s = Support.min s
   index _ = 1
 
 deriving instance Show (Orb Rat)
@@ -74,7 +58,7 @@ deriving instance Ord (Orb Rat)
 -- completely specified by an integer.
 instance Orbit Support where
   newtype Orb Support = OrbSupport Int
-  toOrbit s = OrbSupport (Set.size s)
+  toOrbit s = OrbSupport (Support.size s)
   support s = s
   getElement _ s = s
   index (OrbSupport n) = n
@@ -109,19 +93,19 @@ instance (Orbit a, Orbit b) => Orbit (a, b) where
   data Orb (a,b) = OrbPair !(Orb a) !(Orb b) ![Ordering]
   toOrbit (a, b) = OrbPair (toOrbit a) (toOrbit b) (bla sa sb) 
     where
-      sa = Set.toAscList $ support a
-      sb = Set.toAscList $ support b
+      sa = Support.toList $ support a
+      sb = Support.toList $ support b
       bla [] ys = fmap (const GT) ys
       bla xs [] = fmap (const LT) xs
       bla (x:xs) (y:ys) = case compare x y of
         LT -> LT : (bla xs (y:ys))
         EQ -> EQ : (bla xs ys)
         GT -> GT : (bla (x:xs) ys)
-  support (a, b) = Set.union (support a) (support b)
+  support (a, b) = Support.union (support a) (support b)
   getElement (OrbPair oa ob l) s = (getElement oa $ toSet ls, getElement ob $ toSet rs)
     where
-      (ls, rs) = partitionOrd fst . zip l . Set.toAscList $ s
-      toSet = Set.fromAscList . fmap snd
+      (ls, rs) = partitionOrd fst . zip l . Support.toList $ s
+      toSet = Support.fromDistinctAscList . fmap snd
   index (OrbPair _ _ l) = length l
 
 deriving instance (Show (Orb a), Show (Orb b)) => Show (Orb (a, b))
@@ -143,6 +127,7 @@ selectOrd f x ~(ls, rs) = case f x of
 product :: (Orbit a, Orbit b) => Orb a -> Orb b -> [Orb (a, b)]
 product oa ob = OrbPair oa ob <$> prodStrings (index oa) (index ob)
 
+-- I tried Seq [Ordering], it was slower
 prodStrings :: Int -> Int -> [[Ordering]]
 prodStrings 0 0 = [[]]
 prodStrings 0 n = [replicate n GT]
@@ -161,7 +146,7 @@ newtype Trivial a = Trivial { unTrivial :: a }
 instance Orbit (Trivial a) where
   newtype Orb (Trivial a) = OrbTrivial a
   toOrbit (Trivial a) = OrbTrivial a
-  support _ = Set.empty
+  support _ = Support.empty
   getElement (OrbTrivial a) _ = Trivial a
   index _ = 0
 
@@ -174,7 +159,7 @@ deriving instance Ord a => Ord (Orb (Trivial a))
 instance Orbit a => Orbit (Orb a) where
   newtype Orb (Orb a) = OrbOrb (Orb a)
   toOrbit a = OrbOrb a
-  support _ = Set.empty
+  support _ = Support.empty
   getElement (OrbOrb oa) _ = oa
   index _ = 0
 
