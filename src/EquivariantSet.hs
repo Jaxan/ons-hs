@@ -108,12 +108,12 @@ filter f (EqSet s) = EqSet . Set.filter (f . getElementE) $ s
 -- precondition: f is equivariant
 -- Note that f may change the ordering
 map :: (Orbit a, Orbit b, Ord (Orb b)) => (a -> b) -> EquivariantSet a -> EquivariantSet b
-map f = EqSet . Set.map (toOrbit . f . getElementE) . unEqSet
+map f = EqSet . Set.map (omap f) . unEqSet
 
 -- f should also preserve order on the orbit types!
 -- This means you should know the representation to use it well
 mapMonotonic :: (Orbit a, Orbit b) => (a -> b) -> EquivariantSet a -> EquivariantSet b
-mapMonotonic f = EqSet . Set.mapMonotonic (toOrbit . f . getElementE) . unEqSet
+mapMonotonic f = EqSet . Set.mapMonotonic (omap f) . unEqSet
 
 
 -- Conversion

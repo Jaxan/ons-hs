@@ -3,39 +3,29 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
-module Orbit where
+module Orbit
+  ( module Orbit
+  , module Orbit.Class
+  ) where
 
 import Support (Support, Rat(..))
 import qualified Support
+
+import Orbit.Products
+import Orbit.Class
 
 -- TODO: Make generic instances (we already have sums and products)
 -- TODO: For products: replace [Ordering] with Vec Ordering if better
 -- TODO: replace Support by an ordered vector / list for speed?
 
 
--- This is the main meat of the package. The Orbit typeclass, it gives us ways
--- to manipulate nominal elements in sets and maps. The type class has
--- associated data to represent an orbit of type a. This is often much easier
--- than the type a itself. For example, all orbits of Rat are equal.
--- Furthermore, we provide means to go back and forth between elements and
--- orbits, and we get to know their support size. For many manipulations we
--- need an Ord instance on the associated data type, this can often be
--- implemented, even when the type 'a' does not have an Ord instance.
---
--- Laws / conditions:
--- * index . toOrbit == Set.size . support
--- * getElement o s is defined if index o == Set.size s
-class Orbit a where
-  data Orb a :: *
-  toOrbit :: a -> Orb a
-  support :: a -> Support
-  getElement :: Orb a -> Support -> a
-  index :: Orb a -> Int
-
 -- We can get 'default' values, if we don't care about the support.
 getElementE :: Orbit a => Orb a -> a
 getElementE orb = getElement orb (Support.def (index orb))
 
+-- We can `map` orbits to orbits for equivariant functions
+omap :: (Orbit a, Orbit b) => (a -> b) -> Orb a -> Orb b
+omap f = toOrbit . f . getElementE
 
 -- We can construct orbits from rational numbers. There is exactly one orbit,
 -- so this can be represented by the unit type.
@@ -113,8 +103,8 @@ deriving instance (Eq (Orb a), Eq (Orb b)) => Eq (Orb (a, b))
 deriving instance (Ord (Orb a), Ord (Orb b)) => Ord (Orb (a, b))
 
 -- Could be in prelude or some other general purpose lib
-partitionOrd :: (a -> Ordering) -> [a] -> ([a],[a])
-{-# INLINE partitionOrd #-}
+{-# INLINABLE partitionOrd #-}
+partitionOrd :: (a -> Ordering) -> [a] -> ([a], [a])
 partitionOrd p xs = foldr (selectOrd p) ([], []) xs
 
 selectOrd :: (a -> Ordering) -> a -> ([a], [a]) -> ([a], [a])
@@ -123,19 +113,21 @@ selectOrd f x ~(ls, rs) = case f x of
   EQ -> (x : ls, x : rs)
   GT -> (ls, x : rs)
 
--- Enumerate all orbits in a product. In lexicographical order!
+-- Enumerate all orbits in a product A x B. In lexicographical order!
 product :: (Orbit a, Orbit b) => Orb a -> Orb b -> [Orb (a, b)]
 product oa ob = OrbPair oa ob <$> prodStrings (index oa) (index ob)
 
--- I tried Seq [Ordering], it was slower
-prodStrings :: Int -> Int -> [[Ordering]]
-prodStrings 0 0 = [[]]
-prodStrings 0 n = [replicate n GT]
-prodStrings n 0 = [replicate n LT]
-prodStrings 1 1 = [[LT, GT], [EQ], [GT, LT]]
-prodStrings n m = ((LT :) <$> prodStrings (n-1) m)
-  ++ ((EQ :) <$> prodStrings (n-1) (m-1))
-  ++ ((GT :) <$> prodStrings n (m-1))
+-- Separated product: A * B = { (a,b) | Exist C1, C2 disjoint supporting a, b resp.}
+separatedProduct :: (Orbit a, Orbit b) => Orb a -> Orb b -> [Orb (a, b)]
+separatedProduct oa ob = OrbPair oa ob <$> sepProdStrings (index oa) (index ob)
+
+-- "Left product": A |x B = { (a,b) | C supports a => C supports b }
+leftProduct :: (Orbit a, Orbit b) => Orb a -> Orb b -> [Orb (a, b)]
+leftProduct oa ob = OrbPair oa ob <$> rincProdStrings (index oa) (index ob)
+
+{-# INLINABLE product #-}
+{-# INLINABLE separatedProduct #-}
+{-# INLINABLE leftProduct #-}
 
 
 -- Data structure for the discrete nominal sets with a trivial action.

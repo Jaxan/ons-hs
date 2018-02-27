@@ -18,10 +18,13 @@ library
   exposed-modules:     EquivariantMap
                      , EquivariantSet
                      , Orbit
+                     , Orbit.Class
+                     , Orbit.Products
                      , Support
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , data-ordlist
+                     , MemoTrie
   default-language:    Haskell2010
 
 executable ons-hs-exe
