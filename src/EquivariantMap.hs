@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
@@ -86,26 +87,24 @@ delete k (EqMap m) = EqMap (Map.delete (toOrbit k) m)
 -- Can be done with just Map.unionWith and without getElementE but is a bit
 -- harder (probably easier). Also true for related functions
 -- op should be equivariant!
-unionWith :: (Orbit k, Orbit v, Ord (Orb k)) => (v -> v -> v) -> EquivariantMap k v -> EquivariantMap k v -> EquivariantMap k v
+unionWith :: forall k v. (Orbit k, Orbit v, Ord (Orb k)) => (v -> v -> v) -> EquivariantMap k v -> EquivariantMap k v -> EquivariantMap k v
 unionWith op (EqMap m1) (EqMap m2) = EqMap (Map.unionWithKey opl m1 m2)
-  where opl ko p1 p2 = let k = getElementE ko in mapel k (mapelInv k p1 `op` mapelInv k p2)
+  where opl ko p1 p2 = let k = getElementE ko :: k in mapel k (mapelInv k p1 `op` mapelInv k p2)
 
-intersectionWith :: (Orbit k, Orbit v1, Orbit v2, Orbit v3, Ord (Orb k)) => (v1 -> v2 -> v3) -> EquivariantMap k v1 -> EquivariantMap k v2 -> EquivariantMap k v3
+intersectionWith :: forall k v1 v2 v3. (Orbit k, Orbit v1, Orbit v2, Orbit v3, Ord (Orb k)) => (v1 -> v2 -> v3) -> EquivariantMap k v1 -> EquivariantMap k v2 -> EquivariantMap k v3
 intersectionWith op (EqMap m1) (EqMap m2) = EqMap (Map.intersectionWithKey opl m1 m2)
-  where opl ko p1 p2 = let k = getElementE ko in mapel k (mapelInv k p1 `op` mapelInv k p2)
-
+  where opl ko p1 p2 = let k = getElementE ko :: k in mapel k (mapelInv k p1 `op` mapelInv k p2)
 
 -- Traversal
 
 -- f should be equivariant
-map :: (Orbit k, Orbit v1, Orbit v2) => (v1 -> v2) -> EquivariantMap k v1 -> EquivariantMap k v2
+map :: forall k v1 v2. (Orbit k, Orbit v1, Orbit v2) => (v1 -> v2) -> EquivariantMap k v1 -> EquivariantMap k v2
 map f (EqMap m) = EqMap (Map.mapWithKey f2 m)
-  where f2 ko p1 = let k = getElementE ko in mapel k (f $ mapelInv k p1)
+  where f2 ko p1 = let k = getElementE ko :: k in mapel k (f $ mapelInv k p1)
 
 mapWithKey :: (Orbit k, Orbit v1, Orbit v2) => (k -> v1 -> v2) -> EquivariantMap k v1 -> EquivariantMap k v2
 mapWithKey f (EqMap m) = EqMap (Map.mapWithKey f2 m)
   where f2 ko p1 = let k = getElementE ko in mapel k (f k $ mapelInv k p1)
-
 
 -- Conversion
 
@@ -119,6 +118,6 @@ fromSet f (EqSet s) = EqMap (Map.fromSet f2 s)
 
 -- Filter
 
-filter :: (Orbit k, Orbit v) => (v -> Bool) -> EquivariantMap k v -> EquivariantMap k v
+filter :: forall k v. (Orbit k, Orbit v) => (v -> Bool) -> EquivariantMap k v -> EquivariantMap k v
 filter p (EqMap m) = EqMap (Map.filterWithKey p2 m)
-  where p2 ko pr = let k = getElementE ko in p $ mapelInv k pr
+  where p2 ko pr = let k = getElementE ko :: k in p $ mapelInv k pr

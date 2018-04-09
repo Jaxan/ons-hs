@@ -1,11 +1,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module EquivariantSet where
+
+import Data.Proxy
 
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -38,15 +42,15 @@ deriving instance Ord (Orb a) => Semigroup (EquivariantSet a)
 -- We could derive a correct instance if I had written generic instances.
 -- Didn't do that yet, but a direct instance is also nice.
 instance Orbit (EquivariantSet a) where
-  newtype Orb (EquivariantSet a) = OrbEqSet (EquivariantSet a)
-  toOrbit = OrbEqSet
+  type Orb (EquivariantSet a) = EquivariantSet a
+  toOrbit = id
   support _ = Support.empty
-  getElement (OrbEqSet x) _ = x
-  index _ = 0
+  getElement x _ = x
+  index _ _ = 0
 
-deriving instance Show (Orb a) => Show (Orb (EquivariantSet a))
-deriving instance Eq (Orb a) => Eq (Orb (EquivariantSet a))
-deriving instance Ord (Orb a) => Ord (Orb (EquivariantSet a))
+-- deriving instance Show (Orb a) => Show (Orb (EquivariantSet a))
+-- deriving instance Eq (Orb a) => Eq (Orb (EquivariantSet a))
+-- deriving instance Ord (Orb a) => Ord (Orb (EquivariantSet a))
 
 
 -- Query
@@ -91,9 +95,9 @@ intersection :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> Equivaria
 intersection a b = EqSet $ Set.intersection (unEqSet a) (unEqSet b)
 
 -- This is the meat of the file! Relies on the ordering of Orbit.product
-product :: (Orbit a, Orbit b) => EquivariantSet a -> EquivariantSet b -> EquivariantSet (a, b)
+product :: forall a b. (Orbit a, Orbit b) => EquivariantSet a -> EquivariantSet b -> EquivariantSet (a, b)
 product (EqSet sa) (EqSet sb) = EqSet . Set.fromDistinctAscList . concat
-                              $ Orbit.product <$> Set.toAscList sa <*> Set.toAscList sb
+                              $ Orbit.product (Proxy @a) (Proxy @b) <$> Set.toAscList sa <*> Set.toAscList sb
 
 
 -- Filter
