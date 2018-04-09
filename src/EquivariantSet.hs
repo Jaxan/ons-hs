@@ -88,6 +88,7 @@ delete a = EqSet . Set.delete (toOrbit a) . unEqSet
 union :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 union a b = EqSet $ Set.union (unEqSet a) (unEqSet b)
 
+-- Not symmetric, but A \ B
 difference :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 difference a b = EqSet $ Set.difference (unEqSet a) (unEqSet b)
 
