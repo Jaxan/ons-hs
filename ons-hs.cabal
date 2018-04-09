@@ -21,6 +21,9 @@ library
                      , Orbit.Class
                      , Orbit.Products
                      , Support
+                     , Support.Rat
+                     , Support.OrdList
+                     , Support.Set
   build-depends:       base >= 4.7 && < 5
                      , containers
                      , data-ordlist
