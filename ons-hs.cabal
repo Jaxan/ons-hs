@@ -20,6 +20,7 @@ library
                      , Orbit
                      , Orbit.Class
                      , Orbit.Products
+                     , OrbitList
                      , Support
                      , Support.Rat
                      , Support.OrdList
