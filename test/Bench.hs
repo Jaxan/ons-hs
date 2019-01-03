@@ -5,14 +5,14 @@
 import Control.DeepSeq
 import Criterion.Main
 
-import Orbit
+import Nominal
 import Support
 import EquivariantSet
 import EquivariantMap
 
 instance NFData Rat
 
-(\/) :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
+(\/) :: Ord (Orbit a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 (\/) = EquivariantSet.union
 
 bigset :: (Rat, Rat, Rat, _) -> Bool

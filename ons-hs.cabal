@@ -17,9 +17,9 @@ library
   hs-source-dirs:      src
   exposed-modules:     EquivariantMap
                      , EquivariantSet
-                     , Orbit
-                     , Orbit.Class
-                     , Orbit.Products
+                     , Nominal
+                     , Nominal.Class
+                     , Nominal.Products
                      , OrbitList
                      , Support
                      , Support.Rat

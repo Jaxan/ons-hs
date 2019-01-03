@@ -1,4 +1,4 @@
-module Orbit.Products where
+module Nominal.Products where
 
 import Control.Applicative
 import Data.MemoTrie
