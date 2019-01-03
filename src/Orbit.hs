@@ -48,6 +48,7 @@ instance Orbit Support where
   index _ n = n
 
 
+-- Some instances we can derive via generics
 deriving instance (Orbit a, Orbit b) => Orbit (Either a b)
 
 deriving instance Orbit ()

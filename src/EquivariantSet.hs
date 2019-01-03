@@ -13,13 +13,11 @@ import Data.Proxy
 
 import Data.Set (Set)
 import qualified Data.Set as Set
-import Data.Semigroup (Semigroup)
+import Prelude hiding (map, product)
 
 import Orbit
 import Support
 
--- TODO: think about folds (the monoids should be nominal?)
--- TODO: partition / fromList / ...
 
 -- Given a nominal type, we can construct equivariant sets. These simply use a
 -- standard set data structure. This works well because orbits are uniquely
@@ -76,9 +74,11 @@ empty = EqSet Set.empty
 singleOrbit :: Orbit a => a -> EquivariantSet a
 singleOrbit = EqSet . Set.singleton . toOrbit
 
+-- Insert whole orbit of a
 insert :: (Orbit a, Ord (Orb a)) => a -> EquivariantSet a -> EquivariantSet a
 insert a = EqSet . Set.insert (toOrbit a) . unEqSet
 
+-- Deletes whole orbit of a
 delete :: (Orbit a, Ord (Orb a)) => a -> EquivariantSet a -> EquivariantSet a
 delete a = EqSet . Set.delete (toOrbit a) . unEqSet
 
@@ -95,10 +95,15 @@ difference a b = EqSet $ Set.difference (unEqSet a) (unEqSet b)
 intersection :: Ord (Orb a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 intersection a b = EqSet $ Set.intersection (unEqSet a) (unEqSet b)
 
--- This is the meat of the file! Relies on the ordering of Orbit.product
+-- Cartesian product. This is a non trivial thing and relies on the
+-- ordering of Orbit.product.
 product :: forall a b. (Orbit a, Orbit b) => EquivariantSet a -> EquivariantSet b -> EquivariantSet (a, b)
 product (EqSet sa) (EqSet sb) = EqSet . Set.fromDistinctAscList . concat
                               $ Orbit.product (Proxy @a) (Proxy @b) <$> Set.toAscList sa <*> Set.toAscList sb
+
+-- Cartesian product followed by a function (f should be equivariant)
+productWith :: (Orbit a, Orbit b, Orbit c, Ord (Orb c)) => (a -> b -> c) -> EquivariantSet a -> EquivariantSet b -> EquivariantSet c
+productWith f as bs = map (uncurry f) $ EquivariantSet.product as bs
 
 
 -- Filter
@@ -106,6 +111,11 @@ product (EqSet sa) (EqSet sb) = EqSet . Set.fromDistinctAscList . concat
 -- f should be equivariant
 filter :: Orbit a => (a -> Bool) -> EquivariantSet a -> EquivariantSet a
 filter f (EqSet s) = EqSet . Set.filter (f . getElementE) $ s
+
+-- f should be equivariant
+partition :: Orbit a => (a -> Bool) -> EquivariantSet a -> (EquivariantSet a, EquivariantSet a)
+partition f (EqSet s) = both EqSet . Set.partition (f . getElementE) $ s
+  where both f (a, b) = (f a, f b)
 
 
 -- Map
@@ -115,10 +125,20 @@ filter f (EqSet s) = EqSet . Set.filter (f . getElementE) $ s
 map :: (Orbit a, Orbit b, Ord (Orb b)) => (a -> b) -> EquivariantSet a -> EquivariantSet b
 map f = EqSet . Set.map (omap f) . unEqSet
 
--- f should also preserve order on the orbit types!
+-- precondition: f quivariant and preserves order on the orbits.
 -- This means you should know the representation to use it well
 mapMonotonic :: (Orbit a, Orbit b) => (a -> b) -> EquivariantSet a -> EquivariantSet b
 mapMonotonic f = EqSet . Set.mapMonotonic (omap f) . unEqSet
+
+
+-- Folds
+
+-- I am not sure about the preconditions for folds
+foldr :: Orbit a => (a -> b -> b) -> b -> EquivariantSet a -> b
+foldr f b = Set.foldr (f . getElementE) b . unEqSet
+
+foldl :: Orbit a => (b -> a -> b) -> b -> EquivariantSet a -> b
+foldl f b = Set.foldl (\b -> f b . getElementE) b . unEqSet
 
 
 -- Conversion
@@ -126,3 +146,11 @@ mapMonotonic f = EqSet . Set.mapMonotonic (omap f) . unEqSet
 toList :: Orbit a => EquivariantSet a -> [a]
 toList = fmap getElementE . Set.toList . unEqSet
 
+fromList :: (Orbit a, Ord (Orb a)) => [a] -> EquivariantSet a
+fromList = EqSet . Set.fromList . fmap toOrbit
+
+toOrbitList :: EquivariantSet a -> [Orb a]
+toOrbitList = Set.toList . unEqSet
+
+fromOrbitList :: Ord (Orb a) => [Orb a] -> EquivariantSet a
+fromOrbitList = EqSet . Set.fromList

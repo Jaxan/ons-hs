@@ -34,6 +34,8 @@ class Orbit a where
   getElement :: Orb a -> Support -> a
   index :: Proxy a -> Orb a -> Int
 
+  -- We provide default implementations for generic types
+  -- This enables us to derive Orbit instances by the Haskell compiler
   -- default Orb a :: (Generic a, GOrbit (Rep a)) => *
   type Orb a = GOrb (Rep a)
 
@@ -137,6 +139,8 @@ selectOrd f x ~(ls, rs) = case f x of
 
 
 instance Orbit a => GOrbit (K1 c a) where
+  -- Cannot use (Orb a) here, that may lead to a recursive type
+  -- So we use the type OrbRec a instead (which uses Orb a one step later).
   type GOrb (K1 c a) = OrbRec a
   gtoOrbit (K1 x) = OrbRec (toOrbit x)
   gsupport (K1 x) = support x
