@@ -23,7 +23,7 @@ import qualified GHC.Generics as GHC (Generic)
 import Support
 
 
--- This is the main meat of the package. The Orbit typeclass, it gives us ways
+-- This is the main meat of the package. The Nominal typeclass, it gives us ways
 -- to manipulate nominal elements in sets and maps. The type class has
 -- associated data to represent an orbit of type a. This is often much easier
 -- than the type a itself. For example, all orbits of Rat are equal.
@@ -72,9 +72,7 @@ instance Nominal Support where
 -- 2. A generic instance, this uses the GHC.Generis machinery. This will
 --    derive ``the right'' instance based on the algebraic data type.
 -- Neither of them is a default, so they should be derived using DerivingVia.
--- (Available from GHC 8.6.1.) Example of both:
---    deriving via (Trivial Bool) instance Orbit Bool
---    deriving via (Generic (a, b)) instance (Orbit a, Orbit b) => Orbit (a, b)
+-- (Available from GHC 8.6.1.)
 
 -- For the trivial action, each element is its own orbit and is supported
 -- by the empty set.

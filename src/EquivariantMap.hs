@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -10,9 +11,10 @@ import Data.Semigroup (Semigroup)
 import Data.Map (Map)
 import qualified Data.Map as Map
 
-import EquivariantSet (EquivariantSet(EqSet))
+import EquivariantSet (EquivariantSet(..))
 import Nominal
 import Support
+
 
 -- TODO: foldable / traversable
 -- TODO: adjust / alter / update
@@ -20,6 +22,7 @@ import Support
 -- TODO: don't export the helper functions
 -- TODO: cleanup (usage of getElelemtE is not necessary)
 -- TODO: replace [Bool] by Vec Bool if better?
+
 
 -- Very similar to EquivariantSet, but then the map analogue. The important
 -- thing is that we have to store which values are preserved under a map. This
@@ -32,25 +35,13 @@ deriving instance (Eq (Orbit k), Eq (Orbit v)) => Eq (EquivariantMap k v)
 deriving instance (Ord (Orbit k), Ord (Orbit v)) => Ord (EquivariantMap k v)
 deriving instance (Show (Orbit k), Show (Orbit v)) => Show (EquivariantMap k v)
 
--- Left biased...
+-- Defined by the join-semilattice structure of Map.
+-- This is left biased.
 deriving instance Ord (Orbit k) => Monoid (EquivariantMap k v)
 deriving instance Ord (Orbit k) => Semigroup (EquivariantMap k v)
 
--- Helper functions
-
-mapel :: (Nominal k, Nominal v) => k -> v -> (Orbit v, [Bool])
-mapel k v = (toOrbit v, bv (Support.toList (support k)) (Support.toList (support v)))
-
-bv :: [Rat] -> [Rat] -> [Bool]
-bv l [] = replicate (length l) False
-bv [] _ = error "Non-equivariant function"
-bv (x:xs) (y:ys) = case compare x y of
-  LT -> False : bv xs (y:ys)
-  EQ -> True : bv xs ys
-  GT -> error "Non-equivariant function"
-
-mapelInv :: (Nominal k, Nominal v) => k -> (Orbit v, [Bool]) -> v
-mapelInv x (oy, bv) = getElement oy (Support.fromDistinctAscList . fmap fst . Prelude.filter snd $ zip (Support.toList (support x)) bv)
+-- This action is trivial, since equivariant maps are equivariant
+deriving via (Trivial (EquivariantMap k v)) instance Nominal (EquivariantMap k v) 
 
 
 -- Query
@@ -93,6 +84,7 @@ intersectionWith :: forall k v1 v2 v3. (Nominal k, Nominal v1, Nominal v2, Nomin
 intersectionWith op (EqMap m1) (EqMap m2) = EqMap (Map.intersectionWithKey opl m1 m2)
   where opl ko p1 p2 = let k = getElementE ko :: k in mapel k (mapelInv k p1 `op` mapelInv k p2)
 
+
 -- Traversal
 
 -- f should be equivariant
@@ -103,6 +95,7 @@ map f (EqMap m) = EqMap (Map.mapWithKey f2 m)
 mapWithKey :: (Nominal k, Nominal v1, Nominal v2) => (k -> v1 -> v2) -> EquivariantMap k v1 -> EquivariantMap k v2
 mapWithKey f (EqMap m) = EqMap (Map.mapWithKey f2 m)
   where f2 ko p1 = let k = getElementE ko in mapel k (f k $ mapelInv k p1)
+
 
 -- Conversion
 
@@ -119,3 +112,21 @@ fromSet f (EqSet s) = EqMap (Map.fromSet f2 s)
 filter :: forall k v. (Nominal k, Nominal v) => (v -> Bool) -> EquivariantMap k v -> EquivariantMap k v
 filter p (EqMap m) = EqMap (Map.filterWithKey p2 m)
   where p2 ko pr = let k = getElementE ko :: k in p $ mapelInv k pr
+
+
+-- Helper functions
+
+mapel :: (Nominal k, Nominal v) => k -> v -> (Orbit v, [Bool])
+mapel k v = (toOrbit v, bv (Support.toList (support k)) (Support.toList (support v)))
+
+bv :: [Rat] -> [Rat] -> [Bool]
+bv l [] = replicate (length l) False
+bv [] _ = error "Non-equivariant function"
+bv (x:xs) (y:ys) = case compare x y of
+  LT -> False : bv xs (y:ys)
+  EQ -> True : bv xs ys
+  GT -> error "Non-equivariant function"
+
+mapelInv :: (Nominal k, Nominal v) => k -> (Orbit v, [Bool]) -> v
+mapelInv x (oy, bs) = getElement oy (Support.fromDistinctAscList . fmap fst . Prelude.filter snd $ zip (Support.toList (support x)) bs)
+
