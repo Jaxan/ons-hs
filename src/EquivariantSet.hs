@@ -1,22 +1,19 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module EquivariantSet where
 
 import Data.Proxy
-
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Prelude hiding (map, product)
 
 import Orbit
-import Support
 
 
 -- Given a nominal type, we can construct equivariant sets. These simply use a
@@ -37,18 +34,8 @@ deriving instance Show (Orb a) => Show (EquivariantSet a)
 deriving instance Ord (Orb a) => Monoid (EquivariantSet a)
 deriving instance Ord (Orb a) => Semigroup (EquivariantSet a)
 
--- We could derive a correct instance if I had written generic instances.
--- Didn't do that yet, but a direct instance is also nice.
-instance Orbit (EquivariantSet a) where
-  type Orb (EquivariantSet a) = EquivariantSet a
-  toOrbit = id
-  support _ = Support.empty
-  getElement x _ = x
-  index _ _ = 0
-
--- deriving instance Show (Orb a) => Show (Orb (EquivariantSet a))
--- deriving instance Eq (Orb a) => Eq (Orb (EquivariantSet a))
--- deriving instance Ord (Orb a) => Ord (Orb (EquivariantSet a))
+-- This action is trivial, since equivariant sets are equivariant
+deriving via (Trivial (EquivariantSet a)) instance Orbit (EquivariantSet a) 
 
 
 -- Query

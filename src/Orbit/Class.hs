@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DefaultSignatures #-}
 {-# LANGUAGE DeriveGeneric #-}
@@ -55,6 +56,26 @@ class Orbit a where
   {-# INLINABLE support #-}
   {-# INLINABLE getElement #-}
   {-# INLINABLE index #-}
+
+
+-- Data structure for the discrete nominal sets with a trivial action.
+newtype Trivial a = Trivial { unTrivial :: a }
+  deriving (Eq, Ord, Show)
+
+-- For the trivial action, each element is its own orbit and is supported
+-- by the empty set.
+instance Orbit (Trivial a) where
+  type Orb (Trivial a) = a
+  toOrbit (Trivial a) = a
+  support _ = Support.empty
+  getElement a _ = Trivial a
+  index _ _ = 0
+
+
+-- We can now define trivial instances for some basic types.
+-- This uses a new Haskell extension (ghc 8.6.1)
+deriving via (Trivial Bool) instance Orbit Bool
+
 
 
 -- Generic class, so that custom data types can be derived

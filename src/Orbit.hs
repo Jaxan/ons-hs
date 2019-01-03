@@ -76,15 +76,3 @@ leftProduct pa pb oa ob = OrbPair (OrbRec oa) (OrbRec ob) <$> rincProdStrings (i
 {-# INLINABLE separatedProduct #-}
 {-# INLINABLE leftProduct #-}
 
-
--- Data structure for the discrete nominal sets with a trivial action.
-newtype Trivial a = Trivial { unTrivial :: a }
-  deriving (Eq, Ord, Show)
-
--- We need to remember the value!
-instance Orbit (Trivial a) where
-  type Orb (Trivial a) = a
-  toOrbit (Trivial a) = a
-  support _ = Support.empty
-  getElement a _ = Trivial a
-  index _ _ = 0
