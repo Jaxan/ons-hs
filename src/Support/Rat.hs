@@ -10,4 +10,7 @@ import GHC.Generics (Generic)
 -- Ord instances, and because it's not very nice to work with type synonyms.
 -- Show instance included for debugging.
 newtype Rat = Rat { unRat :: Rational }
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Generic)
+
+instance Show Rat where
+  show (Rat x) = show x

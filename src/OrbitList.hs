@@ -54,6 +54,8 @@ map f (OrbitList as) = OrbitList $ L.map (omap f) as
 filter :: Nominal a => (a -> Bool) -> OrbitList a -> OrbitList a
 filter f = OrbitList . L.filter (f . getElementE) . unOrbitList
 
+take :: Int -> OrbitList a -> OrbitList a
+take n = OrbitList . L.take n . unOrbitList
 
 -- Combinations
 
@@ -89,3 +91,12 @@ projectWith f = unionAll . fmap OrbitList . groupOnFst . splitOrbs . unOrbitList
   where
     splitOrbs = fmap (\o -> (omap fst o, omap snd o))
     groupOnFst = fmap (fmap snd) . L.groupBy (\x y -> fst x == fst y)
+
+
+-- Conversions
+
+toList :: Nominal a => OrbitList a -> [a]
+toList = fmap getElementE . unOrbitList
+
+fromList :: Nominal a => [a] -> OrbitList a
+fromList = OrbitList . fmap toOrbit

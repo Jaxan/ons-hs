@@ -106,6 +106,13 @@ fromSet :: (Nominal k, Nominal v) => (k -> v) -> EquivariantSet k -> Equivariant
 fromSet f (EqSet s) = EqMap (Map.fromSet f2 s)
   where f2 ko = let k = getElementE ko in mapel k (f k)
 
+toList :: (Nominal k, Nominal v) => EquivariantMap k v -> [(k, v)]
+toList (EqMap l) = [(k, mapelInv k vob) | (ko, vob) <- Map.toList l, let k = getElementE ko]
+
+fromList :: (Nominal k, Nominal v, Ord (Orbit k)) => [(k, v)] -> EquivariantMap k v
+fromList l = EqMap . Map.fromList $ [(toOrbit k, mapel k v) | (k, v) <- l]
+
+
 
 -- Filter
 
