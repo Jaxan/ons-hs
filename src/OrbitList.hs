@@ -65,6 +65,9 @@ product (OrbitList as) (OrbitList bs) = OrbitList . concat $ (Nominal.product (P
 productWith :: (Nominal a, Nominal b, Nominal c) => (a -> b -> c) -> OrbitList a -> OrbitList b -> OrbitList c
 productWith f as bs = map (uncurry f) (OrbitList.product as bs)
 
+instance Semigroup (OrbitList a) where (OrbitList as) <> (OrbitList bs) = OrbitList (as <> bs)
+instance Monoid (OrbitList a) where mempty = empty
+
 
 -- Sorted Lists
 
