@@ -8,14 +8,13 @@ module Main where
 
 import Nominal hiding (product)
 import Support (Rat(..), Support(..), intersect)
-import OrbitList --(OrbitList(..), singleOrbit, product, productWith, filter, null, elem, rationals)
+import OrbitList
 import qualified OrbitList as List
 import EquivariantMap (EquivariantMap(..), lookup, (!))
 import qualified EquivariantMap as Map
 import EquivariantSet (EquivariantSet(..))
 import qualified EquivariantSet as Set
 
-import Data.List (nub)
 import Control.Monad.State
 import Prelude hiding (filter, null, elem, lookup, product, Word, map, take, partition)
 
@@ -71,6 +70,7 @@ ask mq table (p, s) =
                         Just b -> return (w, b)
                         Nothing -> (w,) <$> mq w
 
+-- Non trivial, should be made more efficient
 quotient :: _ => EquivariantSet (a, a) -> OrbitList a -> (EquivariantMap a (Int, Support), OrbitList (Int, Support))
 quotient equiv ls = go 0 Map.empty OrbitList.empty (toList ls)
   where
@@ -160,22 +160,36 @@ learn mq = do
               trans = Map.fromList . toList . map (\(s, t) -> (s, f ! t)) . filter (\(s, t) -> equalRows s t suffs table) $ product prefsExt prefs
               trans2 pa = if pa `elem` prefsExt then trans ! pa else f ! pa
           lift (print (Map.toList trans))
-          return Automaton
-              { states = s
-              , initialState = f ! []
-              , acceptance = Map.fromList . toList . map (\p -> (f ! p, table ! p)) $ prefs
-              , transition = Map.fromList . toList . map (\(p, a) -> ((f ! p, a), trans2 (ext p a))) $ product prefs alph
-              }
+          let hypothesis = Automaton
+                { states = s
+                , initialState = f ! []
+                , acceptance = Map.fromList . toList . map (\p -> (f ! p, table ! p)) $ prefs
+                , transition = Map.fromList . toList . map (\(p, a) -> ((f ! p, a), trans2 (ext p a))) $ product prefs alph
+                }
+          eq <- lift (askEquiv hypothesis)
+          case eq of
+            Nothing -> return hypothesis
+            Just w -> error "No counterexample handling yet"
 
 
 accept :: Show a => Word a -> IO Bool
 accept w = do
-  print w
+  putStr "MQ \""
+  putStr (show w)
+  putStrLn "\""
   a <- getLine
   case a of
     "Y" -> return True
     "N" -> return False
     _   -> accept w
+
+askEquiv :: _ => Automaton q a -> IO (Maybe (Word a))
+askEquiv aut = do
+  putStr "EQ \""
+  putStr (show aut)
+  putStrLn "\""
+  a <- getLine
+  return Nothing
 
 main :: IO ()
 main = do
