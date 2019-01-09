@@ -10,6 +10,7 @@ module EquivariantMap where
 import Data.Semigroup (Semigroup)
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.Maybe (fromMaybe)
 
 import EquivariantSet (EquivariantSet(..))
 import Nominal
@@ -55,6 +56,8 @@ member x (EqMap m) = Map.member (toOrbit x) m
 lookup :: (Nominal k, Ord (Orbit k), Nominal v) => k -> EquivariantMap k v -> Maybe v
 lookup x (EqMap m) = mapelInv x <$> Map.lookup (toOrbit x) m
 
+(!) :: (Nominal k, Ord (Orbit k), Nominal v) => EquivariantMap k v -> k -> v
+(!) m k = fromMaybe undefined (EquivariantMap.lookup k m)
 
 -- Construction
 
@@ -112,6 +115,9 @@ toList (EqMap l) = [(k, mapelInv k vob) | (ko, vob) <- Map.toList l, let k = get
 fromList :: (Nominal k, Nominal v, Ord (Orbit k)) => [(k, v)] -> EquivariantMap k v
 fromList l = EqMap . Map.fromList $ [(toOrbit k, mapel k v) | (k, v) <- l]
 
+fromListWith :: forall k v. (Nominal k, Nominal v, Ord (Orbit k)) => (v -> v -> v) -> [(k, v)] -> EquivariantMap k v
+fromListWith f l = EqMap . Map.fromListWithKey opf $ [(toOrbit k, mapel k v) | (k, v) <- l]
+  where opf ko p1 p2 = let k = getElementE ko :: k in mapel k (mapelInv k p1 `f` mapelInv k p2)
 
 
 -- Filter

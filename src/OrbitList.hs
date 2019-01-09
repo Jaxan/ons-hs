@@ -54,6 +54,10 @@ map f (OrbitList as) = OrbitList $ L.map (omap f) as
 filter :: Nominal a => (a -> Bool) -> OrbitList a -> OrbitList a
 filter f = OrbitList . L.filter (f . getElementE) . unOrbitList
 
+partition :: Nominal a => (a -> Bool) -> OrbitList a -> (OrbitList a, OrbitList a)
+partition f (OrbitList s) = both OrbitList . L.partition (f . getElementE) $ s
+  where both g (a, b) = (g a, g b)
+
 take :: Int -> OrbitList a -> OrbitList a
 take n = OrbitList . L.take n . unOrbitList
 

@@ -7,7 +7,10 @@ import Support.Rat
 
 -- always sorted
 newtype Support = Support { unSupport :: [Rat] }
-  deriving (Show, Eq, Ord)
+  deriving (Eq, Ord)
+
+instance Show Support where
+  show = show . unSupport
 
 size :: Support -> Int
 size = List.length . unSupport
@@ -23,6 +26,9 @@ empty = Support []
 
 union :: Support -> Support -> Support
 union (Support x) (Support y) = Support (OrdList.union x y)
+
+intersect :: Support -> Support -> Support
+intersect (Support x) (Support y) = Support (OrdList.isect x y)
 
 singleton :: Rat -> Support
 singleton r = Support [r]

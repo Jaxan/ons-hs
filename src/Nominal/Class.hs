@@ -91,6 +91,7 @@ deriving via (Trivial Void) instance Nominal Void
 deriving via (Trivial ()) instance Nominal ()
 deriving via (Trivial Bool) instance Nominal Bool
 deriving via (Trivial Char) instance Nominal Char
+deriving via (Trivial Int) instance Nominal Int -- NB: Trivial instance!
 deriving via (Trivial Ordering) instance Nominal Ordering
 
 
