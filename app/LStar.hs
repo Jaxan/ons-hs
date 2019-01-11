@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TupleSections #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 module Main where
@@ -10,7 +9,6 @@ import OnsAutomata
 import OnsQuotient
 
 import OrbitList
-import qualified OrbitList as List
 import EquivariantMap (EquivariantMap(..), lookup, (!))
 import qualified EquivariantMap as Map
 import qualified EquivariantSet as Set
@@ -19,10 +17,10 @@ import Data.List (tails)
 import Control.Monad.State
 import Prelude hiding (filter, null, elem, lookup, product, Word, map, take)
 
+-- We use Lists, as they provide a bit more laziness
 type Rows a    = OrbitList (Word a)
 type Columns a = OrbitList (Word a)
 type Table a   = EquivariantMap (Word a) Bool
-
 
 
 -- Utility functions
@@ -49,13 +47,8 @@ inconsistencies prefs suffs table alph =
     candidates = filter (\(s, t) -> s < t && equalRows s t suffs table) (product prefs prefs)
     candidatesExt = product candidates (product alph suffs)
 
--- First lookup, then membership query
-ask mq table (p, s) =
-  let w = p ++ s in case lookup w table of
-                        Just b -> return (w, b)
-                        Nothing -> (w,) <$> mq w
 
-
+-- Main state of the L* algorithm
 -- invariants: * prefs and prefsExt disjoint, without dups
 --             * prefsExt ordered
 --             * prefs and (prefs `union` prefsExt) prefix-closed
@@ -71,19 +64,27 @@ data Observations a = Observations
 -- input alphabet, inner monad, return value
 type LStar i m a = StateT (Observations i) m a
 
+-- First lookup, then membership query, also update the table
+ask mq (p, s) = do
+  Observations{..} <- get
+  let w = p ++ s
+  case lookup w table of
+    Just b -> return (w, b)
+    Nothing -> do
+      b <- lift (mq w)
+      modify $ \o -> o { table = Map.insert w b table }
+      return (w, b)
+
 -- precondition: newPrefs is subset of prefExts
 addRows :: _ => Rows a -> (Word a -> m Bool) -> LStar a m ()
 addRows newPrefs mq = do
   Observations{..} <- get
   let newPrefsExt = productWith ext newPrefs alph
       rect = product newPrefsExt suffs
-  ans <- lift $ mapM (ask mq table) (List.toList rect)
-  put $ Observations
-          { prefs = prefs <> newPrefs
-          , prefsExt = (prefsExt `minus` newPrefs) `union` newPrefsExt
-          , table = table <> Map.fromList ans
-          , ..
-          }
+  _ <- mapM (ask mq) (OrbitList.toList rect)
+  modify $ \o -> o { prefs = prefs <> newPrefs
+                   , prefsExt = (prefsExt `minus` newPrefs) `union` newPrefsExt
+                   }
   return ()
 
 -- precondition: newSuffs disjoint from suffs
@@ -91,40 +92,37 @@ addCols :: _ => Columns a -> (Word a -> m Bool) -> LStar a m ()
 addCols newSuffs mq = do
   Observations{..} <- get
   let rect = product (prefs `union` prefsExt) newSuffs
-  ans <- lift $ mapM (ask mq table) (List.toList rect)
-  put $ Observations
-          { suffs = suffs <> newSuffs
-          , table = table <> Map.fromList ans
-          , ..
-          }
+  _ <- mapM (ask mq) (OrbitList.toList rect)
+  modify $ \o -> o { suffs = suffs <> newSuffs }
   return ()
 
 fillTable :: _ => (Word a -> m Bool) -> LStar a m ()
 fillTable mq = do
   Observations{..} <- get
   let rect = product (prefs `union` prefsExt) suffs
-  ans <- lift $ mapM (ask mq table) (List.toList rect)
-  put $ Observations
-          { table = Map.fromList ans
-          , ..
-          }
+  _ <- mapM (ask mq) (OrbitList.toList rect)
   return ()
 
-learn :: _ => (Word a -> IO Bool) -> LStar a IO (Automaton _ _)
-learn mq = do
+-- This could be cleaned up
+learn :: _ => (Word a -> m Bool) -> (Automaton _ a -> m (Maybe (Word a))) -> LStar a m (Automaton _ a)
+learn mq eq = do
   Observations{..} <- get
   let ncl = nonClosedness prefs prefsExt suffs table
       inc = inconsistencies prefs suffs table alph
   case null ncl of
     False -> do
+      -- If not closed, then add 1 orbit of rows. Then start from top
       addRows (take 1 ncl) mq
-      learn mq
+      learn mq eq
     True -> do
+      -- Closed! Now we check consistency
       case null inc of
         False -> do
+          -- If not consistent, then add 1 orbit of columns. Then start from top
           addCols (take 1 (map (uncurry (:) . snd) inc)) mq
-          learn mq
+          learn mq eq
         True -> do
+          -- Also consistent! Let's build a minimal automaton!
           let equiv  = Set.fromOrbitList . filter (\(s, t) -> equalRows s t suffs table) $ product prefs prefs
               (f, s) = quotient equiv prefs
               trans = Map.fromList . toList . map (\(s, t) -> (s, f ! t)) . filter (\(s, t) -> equalRows s t suffs table) $ product prefsExt prefs
@@ -135,19 +133,28 @@ learn mq = do
                 , acceptance = Map.fromList . toList . map (\p -> (f ! p, table ! p)) $ prefs
                 , transition = Map.fromList . toList . map (\(p, a) -> ((f ! p, a), trans2 (ext p a))) $ product prefs alph
                 }
-          eq <- lift (askEquiv hypothesis)
-          case eq of
-            Nothing -> return hypothesis
-            Just w -> do
-              lift (print w)
-              let allSuffs = Set.fromList $ tails w
-                  newSuffs = allSuffs `Set.difference` Set.fromOrbitList suffs
-              addCols (Set.toOrbitList newSuffs) mq
-              learn mq
+              askCe = do
+                ce <- lift (eq hypothesis)
+                case ce of
+                  Nothing -> return hypothesis
+                  Just w -> do
+                    let b1 = accepts hypothesis w
+                    (_, b2) <- ask mq (w, [])
+                    -- Ignore false counterexamples
+                    case b1 == b2 of
+                      True -> askCe
+                      False -> do
+                        -- Add all suffixes of a counterexample
+                        let allSuffs = Set.fromList $ tails w
+                            newSuffs = allSuffs `Set.difference` Set.fromOrbitList suffs
+                        addCols (Set.toOrbitList newSuffs) mq
+                        learn mq eq
+          askCe
 
 
-accept :: _ => Word a -> IO Bool
-accept w = do
+-- Here is the teacher: just pose the queries in the terminal
+askMember :: _ => Word a -> IO Bool
+askMember w = do
   putStr "MQ \""
   putStr (toStr w)
   putStrLn "\""
@@ -155,7 +162,7 @@ accept w = do
   case a of
     "Y" -> return True
     "N" -> return False
-    _   -> accept w
+    _   -> askMember w
 
 askEquiv :: _ => Automaton q a -> IO (Maybe (Word a))
 askEquiv aut = do
@@ -176,7 +183,5 @@ main = do
       suffs = singleOrbit []
       table = Map.empty
       init = Observations{..}
-  aut <- evalStateT (fillTable accept >> learn accept) init
-  putStrLn "Done learning :D"
+  aut <- evalStateT (fillTable askMember >> learn askMember askEquiv) init
   return ()
-

@@ -1,3 +1,4 @@
+{-# language FlexibleContexts #-}
 {-# language RecordWildCards #-}
 module OnsAutomata where
 
@@ -8,9 +9,9 @@ import Data.List (intersperse)
 import Nominal
 import Support (Rat(..), Support(..))
 import OrbitList as L (OrbitList, toList)
-import EquivariantMap as M (EquivariantMap, toList)
+import EquivariantMap as M (EquivariantMap, toList, (!))
 
-import Prelude hiding (print)
+import Prelude hiding (print, Word)
 
 
 type Word a    = [a]
@@ -22,6 +23,13 @@ data Automaton q a = Automaton
   , acceptance :: EquivariantMap q Bool
   , transition :: EquivariantMap (q, a) q
   }
+
+accepts :: (Nominal q, Ord (Orbit q), Nominal a, Ord (Orbit a))
+        => Automaton q a -> Word a -> Bool
+accepts aut l = go (initialState aut) l
+  where
+    go s []    = acceptance aut ! s
+    go s (a:w) = go (transition aut ! (s, a)) w
 
 
 
