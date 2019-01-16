@@ -15,7 +15,7 @@ import qualified EquivariantSet as Set
 
 import Data.List (tails)
 import Control.Monad.State
-import Prelude hiding (filter, null, elem, lookup, product, Word, map, take)
+import Prelude hiding (filter, null, elem, lookup, product, Word, map, take, init)
 
 -- We use Lists, as they provide a bit more laziness
 type Rows a    = OrbitList (Word a)
@@ -175,13 +175,26 @@ askEquiv aut = do
     'N':' ':w -> return $ Just (fst $ fromStr w)
     _         -> askEquiv aut
 
+init alph = Observations
+  { alph = alph
+  , prefs = singleOrbit []
+  , prefsExt = productWith ext (singleOrbit []) alph
+  , suffs = singleOrbit[]
+  , table = mempty
+  }
+
 main :: IO ()
 main = do
-  let alph = rationals
-      prefs = singleOrbit []
-      prefsExt = productWith ext prefs alph
-      suffs = singleOrbit []
-      table = Map.empty
-      init = Observations{..}
-  aut <- evalStateT (fillTable askMember >> learn askMember askEquiv) init
-  return ()
+  putStrLn "ALPHABET"
+  alph <- getLine
+  case alph of
+    "ATOMS" -> do
+      aut <- evalStateT (fillTable askMember >> learn askMember askEquiv) (init rationals)
+      return ()
+    "FIFO" -> do
+      let alph = map Put rationals `union` map Get rationals
+      aut <- evalStateT (fillTable askMember >> learn askMember askEquiv) (init alph)
+      return ()
+    al -> do
+      putStr "Unknown alphabet "
+      putStrLn al
