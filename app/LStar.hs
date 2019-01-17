@@ -15,6 +15,7 @@ import qualified EquivariantSet as Set
 
 import Data.List (tails)
 import Control.Monad.State
+import System.IO (hFlush, stdout)
 import Prelude hiding (filter, null, elem, lookup, product, Word, map, take, init)
 
 -- We use Lists, as they provide a bit more laziness
@@ -158,6 +159,7 @@ askMember w = do
   putStr "MQ \""
   putStr (toStr w)
   putStrLn "\""
+  hFlush stdout
   a <- getLine
   case a of
     "Y" -> return True
@@ -169,6 +171,7 @@ askEquiv aut = do
   putStr "EQ \""
   putStr (toStr aut)
   putStrLn "\""
+  hFlush stdout
   a <- getLine
   case a of
     "Y"       -> return Nothing
@@ -186,6 +189,7 @@ init alph = Observations
 main :: IO ()
 main = do
   putStrLn "ALPHABET"
+  hFlush stdout
   alph <- getLine
   case alph of
     "ATOMS" -> do
