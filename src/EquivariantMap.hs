@@ -21,7 +21,7 @@ import Support
 -- TODO: adjust / alter / update
 -- TODO: -WithKey functions
 -- TODO: don't export the helper functions
--- TODO: cleanup (usage of getElelemtE is not necessary)
+-- TODO: cleanup (usage of getElelemtE is not always necessary?)
 -- TODO: replace [Bool] by Vec Bool if better?
 
 
@@ -105,6 +105,7 @@ mapWithKey f (EqMap m) = EqMap (Map.mapWithKey f2 m)
 keysSet :: EquivariantMap k v -> EquivariantSet k
 keysSet (EqMap m) = EqSet (Map.keysSet m)
 
+-- f equivariant
 fromSet :: (Nominal k, Nominal v) => (k -> v) -> EquivariantSet k -> EquivariantMap k v
 fromSet f (EqSet s) = EqMap (Map.fromSet f2 s)
   where f2 ko = let k = getElementE ko in mapel k (f k)

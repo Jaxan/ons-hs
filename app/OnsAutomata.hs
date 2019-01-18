@@ -2,7 +2,6 @@
 {-# language DerivingVia #-}
 {-# language FlexibleContexts #-}
 {-# language RecordWildCards #-}
-{-# language StandaloneDeriving #-}
 {-# language UndecidableInstances #-}
 module OnsAutomata where
 
@@ -19,7 +18,7 @@ import Prelude hiding (print, Word)
 import qualified GHC.Generics as GHC
 
 
-type Word a    = [a]
+type Word a = [a]
 
 -- states, initial state, acceptance, transition
 data Automaton q a = Automaton
@@ -40,7 +39,7 @@ accepts aut l = go (initialState aut) l
 -- alphetbet for the Fifo queue example
 data Fifo = Put Rat | Get Rat
   deriving (Eq, Ord, Show, GHC.Generic)
-deriving via Generic Fifo instance Nominal Fifo
+  deriving Nominal via Generic Fifo
 
 
 -- I do not want to give weird Show instances for basic types, so I create my
@@ -67,7 +66,10 @@ instance ToStr Int where toStr i = show i
 instance ToStr a => ToStr [a] where
   toStr = concat . intersperse " " . fmap toStr
 instance (ToStr a, ToStr b) => ToStr (a, b) where
-  toStr (a, b) = "(" ++ toStr a ++ ", " ++ toStr b ++ ")" 
+  toStr (a, b) = "(" ++ toStr a ++ ", " ++ toStr b ++ ")"
+instance ToStr a => ToStr (Maybe a) where
+  toStr Nothing  = "Nothing"
+  toStr (Just a) = "Just " ++ toStr a
 
 instance (Nominal q, Nominal a, ToStr q, ToStr a) => ToStr (Automaton q a) where
   toStr Automaton{..} =
