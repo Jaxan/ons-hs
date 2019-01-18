@@ -41,6 +41,9 @@ elem x = L.elem (toOrbit x) . unOrbitList
 size :: forall a. Nominal a => OrbitList a -> [Int]
 size = LO.sortOn negate . fmap (index (Proxy :: Proxy a)) . unOrbitList
 
+-- May fail when empty
+head :: Nominal a => OrbitList a -> a
+head (OrbitList l) = getElementE (L.head l)
 
 -- Construction
 
@@ -52,6 +55,9 @@ singleOrbit a = OrbitList [toOrbit a]
 
 rationals :: OrbitList Rat
 rationals = singleOrbit (Rat 0)
+
+cons :: Nominal a => a -> OrbitList a -> OrbitList a
+cons a (OrbitList l) = OrbitList (toOrbit a : l)
 
 repeatRationals :: Int -> OrbitList [Rat]
 repeatRationals 0 = singleOrbit []
@@ -75,7 +81,13 @@ take :: Int -> OrbitList a -> OrbitList a
 take n = OrbitList . L.take n . unOrbitList
 
 -- TODO: drop, span, takeWhile, ...
--- TODO: folds
+
+-- TODO: Think about preconditions and postconditions of folds
+foldr :: Nominal a => (a -> b -> b) -> b -> OrbitList a -> b
+foldr f b = L.foldr (f . getElementE) b . unOrbitList
+
+foldl :: Nominal a => (b -> a -> b) -> b -> OrbitList a -> b
+foldl f b = L.foldl (\acc -> f acc . getElementE) b . unOrbitList
 
 
 -- Combinations

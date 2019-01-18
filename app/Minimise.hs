@@ -17,7 +17,7 @@ import qualified EquivariantSet as Set
 
 import Data.Foldable (fold)
 import qualified GHC.Generics as GHC
-import Prelude as P hiding (map, product, words, filter)
+import Prelude as P hiding (map, product, words, filter, foldr)
 
 
 -- Version A: works on equivalence relations
@@ -50,7 +50,7 @@ minimiseA Automaton{..} alph = Automaton
 -- Version B: works on quotient maps
 minimiseB :: _ => Automaton q a -> OrbitList a -> Automaton _ a
 minimiseB Automaton{..} alph = Automaton
-  { states = stInf
+  { states = map fst stInf
   , initialState = phiInf ! initialState
   , acceptance = Map.fromList . fmap (\(s, b) -> (phiInf ! s, b)) . Map.toList $ acceptance
   , transition = Map.fromList . fmap (\((s, a), t) -> ((phiInf ! s, a), phiInf ! t)) . Map.toList $ transition
@@ -59,25 +59,25 @@ minimiseB Automaton{..} alph = Automaton
     -- Are all successors of s0 t0 related?
     nextAreEquiv phi s0 t0 = OrbitList.null
       . filter (\(s2, t2) -> s2 /= t2 && phi ! s2 /= phi ! t2)
-      $ productWith (\(s, t) a -> (transition ! (s, a), transition ! (t, a))) (singleOrbit (s0, t0)) alph
+      $ productWith (\a (s, t) -> (transition ! (s, a), transition ! (t, a))) alph (singleOrbit (s0, t0))
     -- Are s0 t0 equivalent with current information?
     equiv phi s0 t0 = s0 == t0 || (phi ! s0 == phi ! t0 && nextAreEquiv phi s0 t0)
-    -- Given a quotientmap, refine it
-    go phi st = let (phi2, st2) = quotientf (equiv phi) states
-             in if size st == size st2
+    addMid p a (f, b, k) = (p <> f, b <> a, k)
+    -- Given a quotientmap, refine it, per "leaf"
+    go phi st = let (phi2, st2, _) = foldr (\(_, clas) (phix, acc, k) -> addMid phix acc . quotientf k (equiv phi) . Set.toOrbitList $ clas) (mempty, empty, 0) st
+             in if size st == size st2 -- fixpoint
                 then (phi, st)
                 else go phi2 st2
     -- Start with acceptance as quotient map
-    (phi0, st0) = quotientf (\a b -> a == b || acceptance ! a == acceptance ! b) states
+    (phi0, st0, _) = quotientf 0 (\a b -> a == b || acceptance ! a == acceptance ! b) states
     -- Compute fixpoint
     (phiInf, stInf) = go phi0 st0
 
 
 main :: IO ()
 main = do
-  -- putStrLn . toStr . toList . map (\x -> (x, True)) $ words 2
-  -- putStrLn . toStr $ (fifoAut 3)
-  putStrLn . toStr $ (minimiseB (fifoAut 2) fifoAlph)
+  -- putStrLn . toStr $ (doubleWordAut 4)
+  putStrLn . toStr $ (minimiseB (doubleWordAut 4) rationals)
 
 
 -- All example automata follow below
@@ -94,6 +94,12 @@ data DoubleWord = Store [Rat] | Check [Rat] | Accept | Reject
   deriving (Eq, Ord, GHC.Generic)
   deriving Nominal via Generic DoubleWord
 
+instance ToStr DoubleWord where
+  toStr (Store w) = "S " ++ toStr w
+  toStr (Check w) = "C " ++ toStr w
+  toStr Accept    = "A"
+  toStr Reject    = "R"
+
 doubleWordAut 0 = Automaton {..} where
   states = fromList [Accept, Reject]
   initialState = Accept
@@ -106,8 +112,8 @@ doubleWordAut n = Automaton {..} where
   trans Accept _ = Reject
   trans Reject _ = Reject
   trans (Store l) a
-    | length l < n = Store (a:l)
-    | otherwise    = Check (reverse (a:l))
+    | length l + 1 < n = Store (a:l)
+    | otherwise        = Check (reverse (a:l))
   trans (Check (a:as)) b
     | a == b    = if (P.null as) then Accept else Check as
     | otherwise = Reject

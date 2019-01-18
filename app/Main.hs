@@ -2,7 +2,7 @@
 
 module Main where
 
-import OrbitList
+import OrbitList hiding (head)
 import Support (Rat)
 
 import Prelude (Show, Ord, Eq, Int, IO, print, otherwise, (.), ($), (!!), (+), (-), Bool, head, tail)
