@@ -124,12 +124,11 @@ learn mq eq = do
           learn mq eq
         True -> do
           -- Also consistent! Let's build a minimal automaton!
-          let equiv  = Set.fromOrbitList . filter (\(s, t) -> equalRows s t suffs table) $ product prefs prefs
-              (f, s) = quotient equiv prefs
+          let (f, st, _) = quotientf 0 (\s t -> s == t || equalRows s t suffs table) prefs
               trans = Map.fromList . toList . map (\(s, t) -> (s, f ! t)) . filter (\(s, t) -> equalRows s t suffs table) $ product prefsExt prefs
               trans2 pa = if pa `elem` prefsExt then trans ! pa else f ! pa
               hypothesis = Automaton
-                { states = s
+                { states = map fst st
                 , initialState = f ! []
                 , acceptance = Map.fromList . toList . map (\p -> (f ! p, table ! p)) $ prefs
                 , transition = Map.fromList . toList . map (\(p, a) -> ((f ! p, a), trans2 (ext p a))) $ product prefs alph

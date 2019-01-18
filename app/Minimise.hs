@@ -76,8 +76,8 @@ minimiseB Automaton{..} alph = Automaton
 
 main :: IO ()
 main = do
-  -- putStrLn . toStr $ (doubleWordAut 4)
   putStrLn . toStr $ (minimiseB (doubleWordAut 4) rationals)
+  -- putStrLn . toStr $ (minimiseB (fifoAut 4) fifoAlph)
 
 
 -- All example automata follow below

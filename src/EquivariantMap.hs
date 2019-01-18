@@ -59,6 +59,9 @@ lookup x (EqMap m) = mapelInv x <$> Map.lookup (toOrbit x) m
 (!) :: (Nominal k, Ord (Orbit k), Nominal v) => EquivariantMap k v -> k -> v
 (!) m k = fromMaybe undefined (EquivariantMap.lookup k m)
 
+(?) :: (Nominal k, Ord (Orbit k), Nominal v) => EquivariantMap k v -> k -> Maybe v
+(?) m k = EquivariantMap.lookup k m
+
 -- Construction
 
 empty :: EquivariantMap k v
