@@ -87,12 +87,12 @@ instance Nominal (Trivial a) where
 
 -- We can now define trivial instances for some basic types. (Some of these
 -- could equivalently be derived with generics.)
-deriving via (Trivial Void) instance Nominal Void
-deriving via (Trivial ()) instance Nominal ()
-deriving via (Trivial Bool) instance Nominal Bool
-deriving via (Trivial Char) instance Nominal Char
-deriving via (Trivial Int) instance Nominal Int -- NB: Trivial instance!
-deriving via (Trivial Ordering) instance Nominal Ordering
+deriving via Trivial Void instance Nominal Void
+deriving via Trivial () instance Nominal ()
+deriving via Trivial Bool instance Nominal Bool
+deriving via Trivial Char instance Nominal Char
+deriving via Trivial Int instance Nominal Int -- NB: Trivial instance!
+deriving via Trivial Ordering instance Nominal Ordering
 
 
 -- The generic instance unfolds the algebraic data type in sums and products,
@@ -107,14 +107,12 @@ instance (GHC.Generic a, GNominal (Rep a)) => Nominal (Generic a) where
 
 
 -- Some instances we can derive via generics
-deriving via (Generic (a, b)) instance (Nominal a, Nominal b) => Nominal (a, b)
-deriving via (Generic (a, b, c)) instance (Nominal a, Nominal b, Nominal c) => Nominal (a, b, c)
-deriving via (Generic (a, b, c, d)) instance (Nominal a, Nominal b, Nominal c, Nominal d) => Nominal (a, b, c, d)
-
-deriving via (Generic (Either a b)) instance (Nominal a, Nominal b) => Nominal (Either a b)
-
-deriving via (Generic [a]) instance Nominal a => Nominal [a]
-deriving via (Generic (Maybe a)) instance Nominal a => Nominal (Maybe a)
+deriving via Generic (a, b) instance (Nominal a, Nominal b) => Nominal (a, b)
+deriving via Generic (a, b, c) instance (Nominal a, Nominal b, Nominal c) => Nominal (a, b, c)
+deriving via Generic (a, b, c, d) instance (Nominal a, Nominal b, Nominal c, Nominal d) => Nominal (a, b, c, d)
+deriving via Generic (Either a b) instance (Nominal a, Nominal b) => Nominal (Either a b)
+deriving via Generic [a] instance Nominal a => Nominal [a]
+deriving via Generic (Maybe a) instance Nominal a => Nominal (Maybe a)
 
 
 -- Generic class, so that custom data types can be derived

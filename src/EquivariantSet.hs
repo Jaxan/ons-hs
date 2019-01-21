@@ -22,8 +22,10 @@ import OrbitList (OrbitList(..))
 -- represented. Although internally it is just a set of orbits, the interface
 -- will always work directly with elements. This way we model infinite sets.
 -- Note that functions such as toList do not return an ordered list since the
--- representatives are chosen arbitrarily.
+-- representatives are chosen arbitrarily. This action is trivial, since
+-- equivariant sets are equivariant :-).
 newtype EquivariantSet a = EqSet { unEqSet :: Set (Orbit a) }
+  deriving Nominal via Trivial (EquivariantSet a)
 
 -- Need undecidableIntances for this
 deriving instance Eq (Orbit a) => Eq (EquivariantSet a)
@@ -34,9 +36,6 @@ deriving instance Show (Orbit a) => Show (EquivariantSet a)
 -- It defines the join semi-lattice structure
 deriving instance Ord (Orbit a) => Monoid (EquivariantSet a)
 deriving instance Ord (Orbit a) => Semigroup (EquivariantSet a)
-
--- This action is trivial, since equivariant sets are equivariant
-deriving via (Trivial (EquivariantSet a)) instance Nominal (EquivariantSet a) 
 
 
 -- Query

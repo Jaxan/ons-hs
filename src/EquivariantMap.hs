@@ -28,8 +28,10 @@ import Support
 -- Very similar to EquivariantSet, but then the map analogue. The important
 -- thing is that we have to store which values are preserved under a map. This
 -- is done with the list of bit vector. Otherwise, it is an orbit-wise
--- representation, just like sets.
+-- representation, just like sets. This action is trivial, since equivariant
+-- maps are equivariant.
 newtype EquivariantMap k v = EqMap { unEqMap :: Map (Orbit k) (Orbit v, [Bool]) }
+  deriving Nominal via Trivial (EquivariantMap k v)
 
 -- Need undecidableIntances for this
 deriving instance (Eq (Orbit k), Eq (Orbit v)) => Eq (EquivariantMap k v)
@@ -40,9 +42,6 @@ deriving instance (Show (Orbit k), Show (Orbit v)) => Show (EquivariantMap k v)
 -- This is left biased.
 deriving instance Ord (Orbit k) => Monoid (EquivariantMap k v)
 deriving instance Ord (Orbit k) => Semigroup (EquivariantMap k v)
-
--- This action is trivial, since equivariant maps are equivariant
-deriving via (Trivial (EquivariantMap k v)) instance Nominal (EquivariantMap k v) 
 
 
 -- Query

@@ -62,18 +62,20 @@ doubleWordAut n = Automaton {..} where
 
 
 -- alphetbet for the Fifo queue example
-data Fifo = Put Atom | Get Atom
+data FifoA = Put Atom | Get Atom
   deriving (Eq, Ord, Show, GHC.Generic)
-  deriving Nominal via Generic Fifo
+  deriving Nominal via Generic FifoA
 
-instance ToStr Fifo where
+instance ToStr FifoA where
   toStr (Put a) = "Put " ++ toStr a
   toStr (Get a) = "Get " ++ toStr a
 
-instance FromStr Fifo where
+instance FromStr FifoA where
   fromStr ('P':'u':'t':' ':a) = let (x, r) = fromStr a in (Put x, r)
   fromStr ('G':'e':'t':' ':a) = let (x, r) = fromStr a in (Get x, r)
   fromStr _ = error "Cannot parse Fifo"
+
+fifoAlph = map Put rationals <> map Get rationals
 
 data FifoS = FifoS [Atom] [Atom]
   deriving (Eq, Ord, GHC.Generic)
@@ -81,8 +83,6 @@ data FifoS = FifoS [Atom] [Atom]
 
 instance ToStr FifoS where
   toStr (FifoS l1 l2) = "F " ++ toStr l1 ++ " - " ++ toStr l2
-
-fifoAlph = map Put rationals <> map Get rationals
 
 fifoAut n = Automaton {..} where
   states0 = filter (\(FifoS l1 l2) -> length l1 + length l2 <= n) $ productWith (\l1 l2 -> FifoS l1 l2) (words n) (words n)
