@@ -6,17 +6,14 @@
 {-# language UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
-import Nominal hiding (product)
-import Support (Rat(..), Support)
-import OnsAutomata
-import OnsQuotient
+import ExampleAutomata
+import IO
+import Quotient
 import OrbitList
 import EquivariantMap ((!))
 import qualified EquivariantMap as Map
 import qualified EquivariantSet as Set
 
-import Data.Foldable (fold)
-import qualified GHC.Generics as GHC
 import Prelude as P hiding (map, product, words, filter, foldr)
 
 
@@ -78,69 +75,3 @@ main :: IO ()
 main = do
   putStrLn . toStr $ (minimiseB (doubleWordAut 4) rationals)
   -- putStrLn . toStr $ (minimiseB (fifoAut 4) fifoAlph)
-
-
--- All example automata follow below
-
--- words of length <= m
-words m = fold $ go (m+1) (singleOrbit []) where
-  go 0 acc = []
-  go k acc = acc : go (k-1) (productWith (:) rationals acc)
-
-fromKeys f = Map.fromSet f . Set.fromOrbitList
-
-
-data DoubleWord = Store [Rat] | Check [Rat] | Accept | Reject
-  deriving (Eq, Ord, GHC.Generic)
-  deriving Nominal via Generic DoubleWord
-
-instance ToStr DoubleWord where
-  toStr (Store w) = "S " ++ toStr w
-  toStr (Check w) = "C " ++ toStr w
-  toStr Accept    = "A"
-  toStr Reject    = "R"
-
-doubleWordAut 0 = Automaton {..} where
-  states = fromList [Accept, Reject]
-  initialState = Accept
-  acceptance = fromKeys (Accept ==) states
-  transition = fromKeys (const Reject) $ product states rationals
-doubleWordAut n = Automaton {..} where
-  states = fromList [Accept, Reject] <> map Store (words (n-1)) <> map Check (productWith (:) rationals (words (n-1)))
-  initialState = Store []
-  acceptance = fromKeys (Accept ==) states
-  trans Accept _ = Reject
-  trans Reject _ = Reject
-  trans (Store l) a
-    | length l + 1 < n = Store (a:l)
-    | otherwise        = Check (reverse (a:l))
-  trans (Check (a:as)) b
-    | a == b    = if (P.null as) then Accept else Check as
-    | otherwise = Reject
-  transition = fromKeys (uncurry trans) $ product states rationals
-
-
-data FifoS = FifoS [Rat] [Rat]
-  deriving (Eq, Ord, GHC.Generic)
-  deriving Nominal via Generic FifoS
-
-instance ToStr FifoS where
-  toStr (FifoS l1 l2) = "F " ++ toStr l1 ++ " - " ++ toStr l2
-
-fifoAlph = map Put rationals <> map Get rationals
-
-fifoAut n = Automaton {..} where
-  states0 = filter (\(FifoS l1 l2) -> length l1 + length l2 <= n) $ productWith (\l1 l2 -> FifoS l1 l2) (words n) (words n)
-  states = fromList [Nothing] <> map Just states0
-  initialState = Just (FifoS [] [])
-  acceptance = fromKeys (Nothing /=) states
-  trans Nothing _ = Nothing
-  trans (Just (FifoS l1 l2)) (Put a)
-    | length l1 + length l2 >= n = Nothing
-    | otherwise                  = Just (FifoS (a:l1) l2)
-  trans (Just (FifoS [] [])) (Get _) = Nothing
-  trans (Just (FifoS l1 [])) (Get b) = trans (Just (FifoS [] (reverse l1))) (Get b)
-  trans (Just (FifoS l1 (a:l2))) (Get b)
-    | a == b    = Just (FifoS l1 l2)
-    | otherwise = Nothing
-  transition = fromKeys (uncurry trans) $ product states fifoAlph

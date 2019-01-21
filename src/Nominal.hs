@@ -9,8 +9,9 @@ import Data.Proxy
 
 import Nominal.Products
 import Nominal.Class
-import Support (def)
+import Support (Rat, def)
 
+type Atom = Rat
 
 -- We can get 'default' values, if we don't care about the support.
 getElementE :: forall a. Nominal a => Orbit a -> a

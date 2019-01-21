@@ -1,26 +1,34 @@
 {-# language FlexibleContexts #-}
-module OnsQuotient where
+module Quotient where
 
 import Nominal (Nominal(..))
 import Support (Support, intersect)
 import OrbitList
-import EquivariantMap (EquivariantMap(..))
+import EquivariantMap (EquivariantMap)
 import qualified EquivariantMap as Map
-import EquivariantSet (EquivariantSet(..))
+import EquivariantSet (EquivariantSet)
 import qualified EquivariantSet as Set
 
 import Prelude (Bool, Int, Ord, (.), (<>), (+), ($), fst, snd, fmap, uncurry)
+
+
+{- Computes the quotient of some set (given as OrbitList) and equivalence
+   relations. Returns the quotientmap and the set of images. The non-trivial
+   part is computing the least support, this is done by iteratively
+   intersecting supports. -}
 
 type QuotientType = (Int, Support)
 type QuotientMap a = EquivariantMap a QuotientType
 
 -- Computes a quotient map given an equivalence relation
-quotient :: (Nominal a, Ord (Orbit a)) => EquivariantSet (a, a) -> OrbitList a -> (QuotientMap a, OrbitList QuotientType)
+quotient :: (Nominal a, Ord (Orbit a))
+         => EquivariantSet (a, a) -> OrbitList a -> (QuotientMap a, OrbitList QuotientType)
 quotient equiv = post . quotientf 0 (\a b -> (a, b) `Set.member` equiv)
   where post (a, b, _) = (a, map fst b)
 
 -- f should be equivariant and an equivalence relation
-quotientf :: (Nominal a, Ord (Orbit a)) => Int -> (a -> a -> Bool) -> OrbitList a -> (QuotientMap a, OrbitList (QuotientType, EquivariantSet a), Int)
+quotientf :: (Nominal a, Ord (Orbit a))
+          => Int -> (a -> a -> Bool) -> OrbitList a -> (QuotientMap a, OrbitList (QuotientType, EquivariantSet a), Int)
 quotientf k f ls = go k Map.empty empty (toList ls)
   where
     go n phi acc []     = (phi, acc, n)

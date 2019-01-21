@@ -3,11 +3,9 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
-module Main where
-
-import OnsAutomata
-import OnsQuotient
-
+import ExampleAutomata
+import IO
+import Quotient
 import OrbitList
 import EquivariantMap (EquivariantMap(..), lookup, (!))
 import qualified EquivariantMap as Map

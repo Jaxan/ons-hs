@@ -1,7 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
 
-module Main where
-
 import OrbitList hiding (head)
 import Support (Rat)
 
