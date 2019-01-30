@@ -41,7 +41,8 @@ instance ToStr a => ToStr (Maybe a) where
 instance (Nominal q, Nominal a, ToStr q, ToStr a) => ToStr (Automaton q a) where
   toStr Automaton{..} =
        "{ states = " ++ toStr (L.toList states) ++
-       ", initialState = " ++ toStr initialState ++
+       -- HACK: Some automata have no initial state, this avoids crashing
+       --", initialState = " ++ toStr initialState ++
        ", acceptance = " ++ toStr (M.toList acceptance) ++
        ", transition = " ++ toStr (M.toList transition) ++ " }"
 

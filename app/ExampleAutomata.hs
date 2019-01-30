@@ -21,14 +21,17 @@ import Data.Foldable (fold)
 import qualified GHC.Generics as GHC
 import Prelude as P hiding (map, product, words, filter, foldr)
 
--- All example automata follow below
+
+atoms = rationals
 
 -- words of length <= m
 words m = fold $ go (m+1) (singleOrbit []) where
   go 0 _   = []
-  go k acc = acc : go (k-1) (productWith (:) rationals acc)
+  go k acc = acc : go (k-1) (productWith (:) atoms acc)
 
 fromKeys f = Map.fromSet f . Set.fromOrbitList
+
+ltPair = filter (\(a, b) -> a < b) $ product atoms atoms
 
 
 data DoubleWord = Store [Atom] | Check [Atom] | Accept | Reject
@@ -99,3 +102,54 @@ fifoAut n = Automaton {..} where
     | a == b    = Just (FifoS l1 l2)
     | otherwise = Nothing
   transition = fromKeys (uncurry trans) $ product states fifoAlph
+
+
+data Lint a = Lint_start | Lint_single a | Lint_full a a | Lint_semi a a | Lint_error
+  deriving (Eq, Ord, Show, GHC.Generic)
+  deriving Nominal via Generic (Lint a)
+
+lintExample ::Automaton (Lint Atom) Atom
+lintExample = Automaton {..} where
+    states = fromList [Lint_start, Lint_error]
+        <> map Lint_single atoms
+        <> map (uncurry Lint_full) ltPair
+        <> map (uncurry Lint_semi) ltPair
+    initialState = Lint_start
+    acc (Lint_full _ _) = True
+    acc _ = False
+    acceptance = fromKeys acc states
+    trans Lint_start a = Lint_single a
+    trans (Lint_single a) b
+      | a < b = Lint_full a b
+      | otherwise = Lint_error
+    trans (Lint_full a b) c
+      | a < c && c < b = Lint_semi c b
+      | otherwise = Lint_error
+    trans (Lint_semi a b) c
+      | a < c && c < b = Lint_full a c
+      | otherwise = Lint_error
+    trans Lint_error _ = Lint_error
+    transition = fromKeys (uncurry trans) $ product states atoms
+
+
+data Lmax a = Lmax_start | Lmax_single a | Lmax_double a a
+  deriving (Eq, Ord, Show, GHC.Generic)
+  deriving Nominal via Generic (Lmax a)
+
+lmaxExample :: Automaton (Lmax Atom) Atom
+lmaxExample = Automaton {..} where
+    states = singleOrbit Lmax_start
+        <> map Lmax_single atoms
+        <> productWith Lmax_double atoms atoms
+    initialState = Lmax_start
+    acc (Lmax_double a b) = a == b
+    acc _ = False
+    acceptance = fromKeys acc states
+    trans Lmax_start a = Lmax_single a
+    trans (Lmax_single a) b = Lmax_double a b
+    trans (Lmax_double b c) a
+      | b >= c = Lmax_double b a
+      | otherwise = Lmax_double c a
+    transition = fromKeys (uncurry trans) $ product states atoms
+
+

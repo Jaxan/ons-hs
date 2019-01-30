@@ -7,6 +7,7 @@
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 import ExampleAutomata
+import FileAutomata
 import IO
 import Quotient
 import OrbitList
@@ -14,12 +15,15 @@ import EquivariantMap ((!))
 import qualified EquivariantMap as Map
 import qualified EquivariantSet as Set
 
+import System.Environment
+import System.IO
+
 import Prelude as P hiding (map, product, words, filter, foldr)
 
 
 -- Version A: works on equivalence relations
-minimiseA :: _ => Automaton q a -> OrbitList a -> Automaton _ a
-minimiseA Automaton{..} alph = Automaton
+minimiseA :: _ => OrbitList a -> Automaton q a -> Automaton _ a
+minimiseA alph Automaton{..} = Automaton
   { states = states2
   , initialState = phi ! initialState
   , acceptance = Map.fromList . fmap (\(s, b) -> (phi ! s, b)) . Map.toList $ acceptance
@@ -45,8 +49,8 @@ minimiseA Automaton{..} alph = Automaton
 
 
 -- Version B: works on quotient maps
-minimiseB :: _ => Automaton q a -> OrbitList a -> Automaton _ a
-minimiseB Automaton{..} alph = Automaton
+minimiseB :: _ => OrbitList a -> Automaton q a -> Automaton _ a
+minimiseB alph Automaton{..} = Automaton
   { states = map fst stInf
   , initialState = phiInf ! initialState
   , acceptance = Map.fromList . fmap (\(s, b) -> (phiInf ! s, b)) . Map.toList $ acceptance
@@ -73,5 +77,16 @@ minimiseB Automaton{..} alph = Automaton
 
 main :: IO ()
 main = do
-  putStrLn . toStr $ (minimiseB (doubleWordAut 4) rationals)
-  -- putStrLn . toStr $ (minimiseB (fifoAut 4) fifoAlph)
+  f:w <- getArgs
+  case f of
+    "Lmax" -> putStrLn . toStr . minimiseB rationals $ lmaxExample
+    "Lint" -> putStrLn . toStr . minimiseB rationals $ lintExample
+    "Fifo" -> putStrLn . toStr . minimiseB fifoAlph $ fifoAut (read (P.head w) :: Int)
+    "DoubleWord" -> putStrLn . toStr . minimiseB rationals $ doubleWordAut (read (P.head w) :: Int)
+    "File" -> do
+      let m f = fileAutomaton f >>= \(aut, alph) -> putStrLn . toStr . minimiseB alph $ aut
+      mapM_ m w
+    "Formula" -> do
+      (aut, alph) <- formulaAutomaton (P.head w)
+      putStrLn . toStr . minimiseB alph $ aut
+

@@ -56,9 +56,13 @@ executable ons-hs-minimise
   hs-source-dirs:      app
   main-is:             Minimise.hs
   build-depends:       base
+                     , containers
+                     , megaparsec
                      , mtl
                      , ons-hs
+                     , parser-combinators
   other-modules:       ExampleAutomata
+                     , FileAutomata
                      , IO
   ghc-options:         -O2
   default-language:    Haskell2010
