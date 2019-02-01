@@ -75,14 +75,14 @@ For example, for the most sensible instance, use this:
 ```Haskell
 data StateSpace = Store [Atom] | Check [Atom] | Accept | Reject
   deriving (Eq, Ord, GHC.Generic)
-  deriving Nominal via Generic DoubleWord
+  deriving Nominal via Generic StateSpace
 ```
 
 If, however, you want a trivial group action on your data structure. (This is
 used for the data structure for equivariant sets.) Then you can use this:
 
 ```Haskell
-newtype EquivariantSet a = EqSet { unEqSet :: Set (Orbit a) }
+newtype EquivariantSet a = ...
   deriving Nominal via Trivial (EquivariantSet a)
 ```
 
