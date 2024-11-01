@@ -1,91 +1,91 @@
+cabal-version:       2.2
 name:                ons-hs
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            Implementation of the ONS (Ordered Nominal Sets) library in Haskell
 description:         Nominal sets are structured infinite sets. They have symmetries which make them finitely representable. This library provides basic manipulation of them for the total order symmetry. It includes: products, sums, maps and sets. Can work with custom data types.
-homepage:            https://gitlab.science.ru.nl/moerman/ons-hs
-license:             MIT
+homepage:            https://github.com/Jaxan/ons-hs
+license:             EUPL-1.2
 license-file:        LICENSE
 author:              Joshua Moerman
 maintainer:          haskell@joshuamoerman.nl
-copyright:           Joshua Moerman
-category:            Unclassified
+copyright:           (c) 2017-2024 Joshua Moerman
 build-type:          Simple
 extra-source-files:  README.md
-cabal-version:       >=1.10
+
+common stuff
+  build-depends:
+    base >= 4.17 && < 5,
+    containers
+  default-language: Haskell2010
 
 library
-  hs-source-dirs:      src
-  exposed-modules:     Automata
-                     , EquivariantMap
-                     , EquivariantSet
-                     , Nominal
-                     , Nominal.Class
-                     , Nominal.Products
-                     , OrbitList
-                     , Quotient
-                     , Support
-                     , Support.Rat
-                     , Support.OrdList
-                     , Support.Set
-  build-depends:       base >= 4.7 && < 5
-                     , containers
-                     , data-ordlist
-                     , MemoTrie
-  default-language:    Haskell2010
+  import: stuff
+  hs-source-dirs: src
+  exposed-modules:
+    Automata,
+    EquivariantMap,
+    EquivariantSet,
+    Nominal,
+    Nominal.Class,
+    Nominal.Products,
+    OrbitList,
+    Quotient,
+    Support,
+    Support.OrdList,
+    Support.Rat,
+    Support.Set
+  build-depends:
+    data-ordlist,
+    MemoTrie
 
 executable ons-hs-solver
-  hs-source-dirs:      app
-  main-is:             FoSolver.hs
-  build-depends:       base
-                     , ons-hs
-  ghc-options:         -O2
-  default-language:    Haskell2010
+  import: stuff
+  hs-source-dirs: app
+  main-is: FoSolver.hs
+  build-depends: ons-hs
 
 executable ons-hs-lstar
-  hs-source-dirs:      app
-  main-is:             LStar.hs
-  build-depends:       base
-                     , mtl
-                     , ons-hs
-  other-modules:       ExampleAutomata
-                     , IO
-  ghc-options:         -O2
-  default-language:    Haskell2010
+  import: stuff
+  hs-source-dirs: app
+  main-is: LStar.hs
+  build-depends:
+    mtl,
+    ons-hs
+  other-modules:
+    ExampleAutomata,
+    IO
 
 executable ons-hs-minimise
-  hs-source-dirs:      app
-  main-is:             Minimise.hs
-  build-depends:       base
-                     , containers
-                     , megaparsec
-                     , mtl
-                     , ons-hs
-                     , parser-combinators
-  other-modules:       ExampleAutomata
-                     , FileAutomata
-                     , IO
-  ghc-options:         -O2
-  default-language:    Haskell2010
+  import: stuff
+  hs-source-dirs: app
+  main-is: Minimise.hs
+  build-depends:
+    megaparsec,
+    mtl,
+    ons-hs,
+    parser-combinators
+  other-modules:
+    ExampleAutomata,
+    FileAutomata,
+    IO
 
 benchmark ons-hs-bench
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Bench.hs
-  build-depends:       base
-                     , criterion
-                     , deepseq
-                     , ons-hs
-  ghc-options:         -O2
-  default-language:    Haskell2010
+  import: stuff
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Bench.hs
+  build-depends:
+    criterion,
+    deepseq,
+    ons-hs
 
 test-suite ons-hs-test
-  type:                exitcode-stdio-1.0
-  hs-source-dirs:      test
-  main-is:             Spec.hs
-  build-depends:       base
-                     , ons-hs
-  default-language:    Haskell2010
+  import: stuff
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+  build-depends: ons-hs
 
 source-repository head
-  type:     git
-  location: https://gitlab.science.ru.nl/moerman/ons-hs
+  type: git
+  location: https://github.com/Jaxan/ons-hs

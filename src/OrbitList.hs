@@ -18,7 +18,7 @@ import Support (Rat(..))
 -- Similar to EquivariantSet, but merely a list structure. It is an
 -- equivariant data type, so the Nominal instance is trivial.
 newtype OrbitList a = OrbitList { unOrbitList :: [Orbit a] }
-  deriving Nominal via Trivial (OrbitList a)
+  deriving Nominal via Trivially (OrbitList a)
 
 deriving instance Eq (Orbit a) => Eq (OrbitList a)
 deriving instance Ord (Orbit a) => Ord (OrbitList a)

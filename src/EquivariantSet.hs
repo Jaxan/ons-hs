@@ -25,7 +25,7 @@ import OrbitList (OrbitList(..))
 -- representatives are chosen arbitrarily. This action is trivial, since
 -- equivariant sets are equivariant :-).
 newtype EquivariantSet a = EqSet { unEqSet :: Set (Orbit a) }
-  deriving Nominal via Trivial (EquivariantSet a)
+  deriving Nominal via Trivially (EquivariantSet a)
 
 -- Need undecidableIntances for this
 deriving instance Eq (Orbit a) => Eq (EquivariantSet a)

@@ -18,7 +18,7 @@ import qualified EquivariantMap as Map
 import qualified EquivariantSet as Set
 
 import Data.Foldable (fold)
-import qualified GHC.Generics as GHC
+import GHC.Generics (Generic)
 import Prelude as P hiding (map, product, words, filter, foldr)
 
 
@@ -35,8 +35,8 @@ ltPair = filter (\(a, b) -> a < b) $ product atoms atoms
 
 
 data DoubleWord = Store [Atom] | Check [Atom] | Accept | Reject
-  deriving (Eq, Ord, GHC.Generic)
-  deriving Nominal via Generic DoubleWord
+  deriving (Eq, Ord, Generic)
+  deriving Nominal via Generically DoubleWord
 
 instance ToStr DoubleWord where
   toStr (Store w) = "S " ++ toStr w
@@ -66,8 +66,8 @@ doubleWordAut n = Automaton {..} where
 
 -- alphetbet for the Fifo queue example
 data FifoA = Put Atom | Get Atom
-  deriving (Eq, Ord, Show, GHC.Generic)
-  deriving Nominal via Generic FifoA
+  deriving (Eq, Ord, Show, Generic)
+  deriving Nominal via Generically FifoA
 
 instance ToStr FifoA where
   toStr (Put a) = "Put " ++ toStr a
@@ -81,8 +81,8 @@ instance FromStr FifoA where
 fifoAlph = map Put rationals <> map Get rationals
 
 data FifoS = FifoS [Atom] [Atom]
-  deriving (Eq, Ord, GHC.Generic)
-  deriving Nominal via Generic FifoS
+  deriving (Eq, Ord, Generic)
+  deriving Nominal via Generically FifoS
 
 instance ToStr FifoS where
   toStr (FifoS l1 l2) = "F " ++ toStr l1 ++ " - " ++ toStr l2
@@ -105,8 +105,8 @@ fifoAut n = Automaton {..} where
 
 
 data Lint a = Lint_start | Lint_single a | Lint_full a a | Lint_semi a a | Lint_error
-  deriving (Eq, Ord, Show, GHC.Generic)
-  deriving Nominal via Generic (Lint a)
+  deriving (Eq, Ord, Show, Generic)
+  deriving Nominal via Generically (Lint a)
 
 lintExample ::Automaton (Lint Atom) Atom
 lintExample = Automaton {..} where
@@ -133,8 +133,8 @@ lintExample = Automaton {..} where
 
 
 data Lmax a = Lmax_start | Lmax_single a | Lmax_double a a
-  deriving (Eq, Ord, Show, GHC.Generic)
-  deriving Nominal via Generic (Lmax a)
+  deriving (Eq, Ord, Show, Generic)
+  deriving Nominal via Generically (Lmax a)
 
 lmaxExample :: Automaton (Lmax Atom) Atom
 lmaxExample = Automaton {..} where

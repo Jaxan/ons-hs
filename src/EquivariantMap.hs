@@ -31,7 +31,7 @@ import Support
 -- representation, just like sets. This action is trivial, since equivariant
 -- maps are equivariant.
 newtype EquivariantMap k v = EqMap { unEqMap :: Map (Orbit k) (Orbit v, [Bool]) }
-  deriving Nominal via Trivial (EquivariantMap k v)
+  deriving Nominal via Trivially (EquivariantMap k v)
 
 -- Need undecidableIntances for this
 deriving instance (Eq (Orbit k), Eq (Orbit v)) => Eq (EquivariantMap k v)

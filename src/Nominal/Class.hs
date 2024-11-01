@@ -9,16 +9,16 @@
 
 module Nominal.Class
   ( Nominal(..) -- typeclass
-  , Trivial(..) -- newtype wrapper for deriving instances
-  , Generic(..) -- newtype wrapper for deriving instances
+  , Trivially(..) -- newtype wrapper for deriving instances
+  , Generically(..) -- newtype wrapper for deriving instances
   , OrbPair(..) -- need to export?
   , OrbRec(..)  -- need to export?
   ) where
 
-import Data.Void
+import Data.Kind (Type)
 import Data.Proxy (Proxy(..))
-import GHC.Generics hiding (Generic)
-import qualified GHC.Generics as GHC (Generic)
+import Data.Void
+import GHC.Generics
 
 import Support
 
@@ -36,7 +36,7 @@ import Support
 -- * index . toOrbit == size . support
 -- * getElement o s is defined if index o == Set.size s
 class Nominal a where
-  type Orbit a :: *
+  type Orbit a :: Type
   toOrbit    :: a -> Orbit a
   support    :: a -> Support
   getElement :: Orbit a -> Support -> a
@@ -76,9 +76,9 @@ instance Nominal Support where
 
 -- For the trivial action, each element is its own orbit and is supported
 -- by the empty set.
-newtype Trivial a = Trivial { unTrivial :: a }
-instance Nominal (Trivial a) where
-  type Orbit (Trivial a) = a
+newtype Trivially a = Trivial a
+instance Nominal (Trivially a) where
+  type Orbit (Trivially a) = a
   toOrbit (Trivial a) = a
   support _ = Support.empty
   getElement a _ = Trivial a
@@ -87,37 +87,39 @@ instance Nominal (Trivial a) where
 
 -- We can now define trivial instances for some basic types. (Some of these
 -- could equivalently be derived with generics.)
-deriving via Trivial Void instance Nominal Void
-deriving via Trivial () instance Nominal ()
-deriving via Trivial Bool instance Nominal Bool
-deriving via Trivial Char instance Nominal Char
-deriving via Trivial Int instance Nominal Int -- NB: Trivial instance!
-deriving via Trivial Ordering instance Nominal Ordering
+deriving via Trivially Void instance Nominal Void
+deriving via Trivially () instance Nominal ()
+deriving via Trivially Bool instance Nominal Bool
+deriving via Trivially Char instance Nominal Char
+deriving via Trivially Int instance Nominal Int -- NB: Trivial instance!
+deriving via Trivially Ordering instance Nominal Ordering
 
 
 -- The generic instance unfolds the algebraic data type in sums and products,
 -- these have their own instances defined below.
-newtype Generic a = Generic { unGeneric :: a }
-instance (GHC.Generic a, GNominal (Rep a)) => Nominal (Generic a) where
-  type Orbit (Generic a) = GOrbit (Rep a)
-  toOrbit = gtoOrbit . from . unGeneric
-  support = gsupport . from . unGeneric
-  getElement o s = Generic (to (ggetElement o s))
+instance (Generic a, GNominal (Rep a)) => Nominal (Generically a) where
+  type Orbit (Generically a) = GOrbit (Rep a)
+  toOrbit = gtoOrbit . from . unGenerically
+  support = gsupport . from . unGenerically
+  getElement o s = Generically (to (ggetElement o s))
   index _ = gindex (Proxy :: Proxy (Rep a))
 
+-- Not exported
+unGenerically :: Generically a -> a
+unGenerically (Generically a) = a
 
 -- Some instances we can derive via generics
-deriving via Generic (a, b) instance (Nominal a, Nominal b) => Nominal (a, b)
-deriving via Generic (a, b, c) instance (Nominal a, Nominal b, Nominal c) => Nominal (a, b, c)
-deriving via Generic (a, b, c, d) instance (Nominal a, Nominal b, Nominal c, Nominal d) => Nominal (a, b, c, d)
-deriving via Generic (Either a b) instance (Nominal a, Nominal b) => Nominal (Either a b)
-deriving via Generic [a] instance Nominal a => Nominal [a]
-deriving via Generic (Maybe a) instance Nominal a => Nominal (Maybe a)
+deriving via Generically (a, b) instance (Nominal a, Nominal b) => Nominal (a, b)
+deriving via Generically (a, b, c) instance (Nominal a, Nominal b, Nominal c) => Nominal (a, b, c)
+deriving via Generically (a, b, c, d) instance (Nominal a, Nominal b, Nominal c, Nominal d) => Nominal (a, b, c, d)
+deriving via Generically (Either a b) instance (Nominal a, Nominal b) => Nominal (Either a b)
+deriving via Generically [a] instance Nominal a => Nominal [a]
+deriving via Generically (Maybe a) instance Nominal a => Nominal (Maybe a)
 
 
 -- Generic class, so that custom data types can be derived
 class GNominal f where
-  type GOrbit f :: *
+  type GOrbit f :: Type
   gtoOrbit    :: f a -> GOrbit f
   gsupport    :: f a -> Support
   ggetElement :: GOrbit f -> Support -> f a
@@ -165,7 +167,7 @@ instance (GNominal f, GNominal g) => GNominal (f :+: g) where
 -- to enumerate the whole product.
 instance (GNominal f, GNominal g) => GNominal (f :*: g) where
   type GOrbit (f :*: g) = OrbPair (GOrbit f) (GOrbit g)
-  gtoOrbit ~(a :*: b) = OrbPair (gtoOrbit a) (gtoOrbit b) (bla sa sb) 
+  gtoOrbit ~(a :*: b) = OrbPair (gtoOrbit a) (gtoOrbit b) (bla sa sb)
     where
       sa = toList $ gsupport a
       sb = toList $ gsupport b
@@ -183,7 +185,7 @@ instance (GNominal f, GNominal g) => GNominal (f :*: g) where
   gindex _ (OrbPair _ _ l) = length l
 
 data OrbPair a b = OrbPair !a !b ![Ordering]
-  deriving (Eq, Ord, Show, GHC.Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 -- Could be in prelude or some other general purpose lib
 partitionOrd :: (a -> Ordering) -> [a] -> ([a], [a])
@@ -206,7 +208,7 @@ instance Nominal a => GNominal (K1 c a) where
   gindex _ (OrbRec o) = index (Proxy :: Proxy a) o
 
 newtype OrbRec a = OrbRec (Orbit a)
-  deriving GHC.Generic
+  deriving Generic
 deriving instance Eq (Orbit a) => Eq (OrbRec a)
 deriving instance Ord (Orbit a) => Ord (OrbRec a)
 deriving instance Show (Orbit a) => Show (OrbRec a)
