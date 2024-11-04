@@ -1,0 +1,6 @@
+package *
+  optimization: True
+
+package ons-hs
+  -- profiling: True
+  ghc-options: -Wall -fexpose-all-unfoldings -fspecialise-aggressively

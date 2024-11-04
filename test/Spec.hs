@@ -1,25 +1,27 @@
 {-# LANGUAGE PartialTypeSignatures #-}
-{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
-
--- TODO: QuickCheck instead of these unit tests
-
-import GHC.Stack
+{-# OPTIONS_GHC -Wno-partial-type-signatures -Wno-orphans #-}
 
 import Data.Maybe (isJust, isNothing)
-import Prelude (id, const, not, ($), error, return, Bool(..), IO(..), print, (>>=))
-import qualified Prelude as P -- hide stuff
+import Test.Tasty
+import Test.Tasty.HUnit hiding (assert)
+import Test.Tasty.QuickCheck as QC
+import Prelude (Bool (..), Eq (..), IO, Int, const, id, length, not, show, (!!), ($), (<$>))
 
-import Support (Rat(..))
-import EquivariantSet (product, member, singleOrbit, union, map, isSubsetOf)
-import EquivariantMap (unionWith, lookup, fromSet)
+import EquivariantMap (fromSet, lookup, unionWith)
+import EquivariantSet (isSubsetOf, map, member, product, singleOrbit, union)
+import Nominal (Nominal (..))
+import OrbitList (repeatRationals, size)
+import Support (Rat (..))
 
-assert :: (a -> Bool) -> a -> IO ()
-assert f x = case f x of
-  True -> return ()
-  False -> whoCreated x >>= print
+assert :: HasCallStack => (a -> Bool) -> a -> IO ()
+assert f x = assertBool "" (f x)
 
 main :: IO ()
-main = do
+main = defaultMain (testGroup "main" [unitTests, countingTests, qcTests])
+
+
+unitTests :: _
+unitTests = testCase "Examples" $ do
   let p  = Rat 1
   let q  = Rat 2
   let s  = product (singleOrbit (p, q)) (singleOrbit (q, p))
@@ -39,12 +41,12 @@ main = do
   assert id  $ member (((Rat 5, Rat 4), (Rat 1, Rat 2)), ((Rat 5, Rat 4), (Rat 1, Rat 2))) s3
   assert id  $ member (((Rat 2, Rat 1), (Rat 4, Rat 5)), ((Rat 2, Rat 1), (Rat 4, Rat 5))) s3
 
-  let m1 = fromSet (\(((a, b), (c, d)), ((e, f), (g, h))) -> (b,(d,h))) s2
-  assert isJust    $ lookup (((Rat 1, Rat 2), (Rat 2, Rat 1)), ((Rat 1, Rat 2), (Rat 3, Rat 2))) m1
+  let m1 = fromSet (\(((_, b), (_, d)), (_, (_, h))) -> (b, (d, h))) s2
+  assert isJust $ lookup (((Rat 1, Rat 2), (Rat 2, Rat 1)), ((Rat 1, Rat 2), (Rat 3, Rat 2))) m1
   assert isNothing $ lookup (((Rat 1, Rat 2), (Rat 2, Rat 1)), ((Rat 1, Rat 2), (Rat 1, Rat 2))) m1
 
-  let m2 = fromSet (\(((a, b), (c, d)), ((e, f), (g, h))) -> (b,(d,h))) s3
-  assert isJust    $ lookup (((Rat 6, Rat 1), (Rat 1, Rat 5)), ((Rat 4, Rat 1), (Rat 1, Rat 3))) m2
+  let m2 = fromSet (\(((_, b), (_, d)), (_, (_, h))) -> (b, (d, h))) s3
+  assert isJust $ lookup (((Rat 6, Rat 1), (Rat 1, Rat 5)), ((Rat 4, Rat 1), (Rat 1, Rat 3))) m2
   assert isNothing $ lookup (((Rat 1, Rat 2), (Rat 2, Rat 1)), ((Rat 1, Rat 2), (Rat 4, Rat 2))) m2
 
   let m3 = unionWith const m1 m2
@@ -55,14 +57,32 @@ main = do
   assert isJust    $ lookup (((Rat 100, Rat 1), (Rat 1, Rat 100)), ((Rat 200, Rat 2), (Rat 2, Rat 200))) m3
 
   let r = Rat 3
-  let s1 = singleOrbit ((p, p), p) `union` singleOrbit ((p, p), q) `union` singleOrbit ((p, q), r)
-  let s2 = singleOrbit (p, q) `union` singleOrbit (q, r) `union` singleOrbit (r, p)
-  assert id  $ s2 `isSubsetOf` product (singleOrbit p) (singleOrbit p)
-  assert not $ product (singleOrbit p) (singleOrbit p) `isSubsetOf` s2
+  let s4 = singleOrbit ((p, p), p) `union` singleOrbit ((p, p), q) `union` singleOrbit ((p, q), r)
+  let s5 = singleOrbit (p, q) `union` singleOrbit (q, r) `union` singleOrbit (r, p)
+  assert id $ s5 `isSubsetOf` product (singleOrbit p) (singleOrbit p)
+  assert not $ product (singleOrbit p) (singleOrbit p) `isSubsetOf` s5
 
-  let s  = product s1 s2
-  assert id  $ member ( ((Rat 1, Rat 1), Rat 1), (Rat 1, Rat 2) ) s
-  assert id  $ member ( ((Rat 37, Rat 37), Rat 42), (Rat 1, Rat 2) ) s
-  assert not $ member ( ((Rat 37, Rat 31), Rat 42), (Rat 1, Rat 2) ) s
-  assert id  $ member ( ((Rat 1, Rat 2), Rat 3), (Rat 5, Rat 4) ) s
+  let s6 = product s4 s5
+  assert id $ member (((Rat 1, Rat 1), Rat 1), (Rat 1, Rat 2)) s6
+  assert id $ member (((Rat 37, Rat 37), Rat 42), (Rat 1, Rat 2)) s6
+  assert not $ member (((Rat 37, Rat 31), Rat 42), (Rat 1, Rat 2)) s6
+  assert id $ member (((Rat 1, Rat 2), Rat 3), (Rat 5, Rat 4)) s6
 
+
+-- Verifying that the number of orbits is correct. Up to length 7, because
+-- length 8 and longer take at least one second.
+countingTests :: _
+countingTests = testGroup "Counting" [testCase (show n) $ length (OrbitList.size (repeatRationals n)) @?= (a000670 !! n) | n <- [0..7]]
+
+-- A000670: Ordered Bell numbers or Fubini numbers
+a000670 :: [Int]
+a000670 = [1, 1, 3, 13, 75, 541, 4683, 47293, 545835, 7087261, 102247563, 1622632573, 28091567595]
+
+
+-- TODO: Add more quickcheck tests
+qcTests :: _
+qcTests = testGroup "QuickCheck" [QC.testProperty "all atoms in same orbit" $ \p q -> toOrbit (p :: Rat) == toOrbit (q :: Rat)]
+
+instance Arbitrary Rat where
+  arbitrary = Rat <$> arbitrary
+  shrink (Rat p) = Rat <$> shrink p

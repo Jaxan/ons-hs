@@ -114,6 +114,9 @@ values, that can be much faster.
 
 ## Changelog
 
+version 0.2.1.0 (2024-11-04):
+* Updates the testing and benchmarking framework.
+
 version 0.2.0.0 (2024-11-01):
 * Resolves compiler warnings.
 * Moved from own `Generic` to `GHC.Generically` (needs base 4.17+). If you want

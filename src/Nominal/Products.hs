@@ -27,15 +27,13 @@ rincProdStrings = memo2 gen where
   gen n 0 = pure $ replicate n LT
   gen 0 _ = empty
   gen 1 1 = pure [EQ]
-  gen n m 
+  gen n m
     | n < m     = empty
     | otherwise = (LT :) <$> rincProdStrings (n-1) m
               <|> (EQ :) <$> rincProdStrings (n-1) (m-1)
 
-{-# INLINABLE prodStrings #-}
-{-# INLINABLE sepProdStrings #-}
-{-# INLINABLE rincProdStrings #-}
-
-{-# SPECIALIZE prodStrings :: Int -> Int -> [[Ordering]] #-}
-{-# SPECIALIZE sepProdStrings :: Int -> Int -> [[Ordering]] #-}
-{-# SPECIALIZE rincProdStrings :: Int -> Int -> [[Ordering]] #-}
+{- NOTE on performance:
+Previously, I had INLINABLE and SPECIALIZE pragmas for all above definitions.
+But with benchmarking, I concluded that they do not make any difference. So
+I have removed them. The memoisation does seem to help. So that stays.
+-}

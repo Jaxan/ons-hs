@@ -32,8 +32,3 @@ separatedProduct pa pb oa ob = OrbPair (OrbRec oa) (OrbRec ob) <$> sepProdString
 -- "Left product": A |x B = { (a,b) | C supports a => C supports b }
 leftProduct :: (Nominal a, Nominal b) => Proxy a -> Proxy b -> Orbit a -> Orbit b -> [Orbit (a,b)]
 leftProduct pa pb oa ob = OrbPair (OrbRec oa) (OrbRec ob) <$> rincProdStrings (index pa oa) (index pb ob)
-
-{-# INLINABLE product #-}
-{-# INLINABLE separatedProduct #-}
-{-# INLINABLE leftProduct #-}
-
