@@ -114,8 +114,10 @@ values, that can be much faster.
 
 ## Changelog
 
-version 0.2.2.0 (2024-11-05):
+version 0.2.3.0 (2024-11-05):
 * Updates the testing and benchmarking framework.
+* Replaced benchmarking dependencies, making the build process much faster.
+* Added an example teacher, and run script.
 
 version 0.2.0.0 (2024-11-01):
 * Resolves compiler warnings.
