@@ -114,7 +114,7 @@ values, that can be much faster.
 
 ## Changelog
 
-version 0.2.1.0 (2024-11-04):
+version 0.2.2.0 (2024-11-05):
 * Updates the testing and benchmarking framework.
 
 version 0.2.0.0 (2024-11-01):

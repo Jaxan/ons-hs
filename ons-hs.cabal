@@ -1,6 +1,6 @@
 cabal-version:       2.2
 name:                ons-hs
-version:             0.2.1.0
+version:             0.2.2.0
 synopsis:            Implementation of the ONS (Ordered Nominal Sets) library in Haskell
 description:         Nominal sets are structured infinite sets. They have symmetries which make them finitely representable. This library provides basic manipulation of them for the total order symmetry. It includes: products, sums, maps and sets. Can work with custom data types.
 homepage:            https://github.com/Jaxan/ons-hs
@@ -84,6 +84,10 @@ test-suite ons-hs-test
   type: exitcode-stdio-1.0
   hs-source-dirs: test
   main-is: Spec.hs
+  other-modules:
+    SpecMap,
+    SpecSet,
+    SpecUtils
   build-depends:
     ons-hs,
     tasty,
