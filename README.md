@@ -114,8 +114,11 @@ values, that can be much faster.
 
 ## Changelog
 
-version 0.3.0.0 (2024-11-06):
+version 0.3.1.0 (2024-11-06):
 * More types of products
+* Stuff to do permutations (not only monotone ones)
+* New LStar variant, which can learn equivariant (wrt permutations) languages
+  with fewer queries. But it is slower.
 
 version 0.2.3.0 (2024-11-05):
 * Updates the testing and benchmarking framework.

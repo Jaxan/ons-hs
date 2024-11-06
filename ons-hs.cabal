@@ -29,6 +29,7 @@ library
     Nominal.Class,
     Nominal.Products,
     OrbitList,
+    Permutable,
     Quotient,
     Support,
     Support.OrdList,
@@ -48,6 +49,17 @@ executable ons-hs-lstar
   import: stuff
   hs-source-dirs: app
   main-is: LStar.hs
+  build-depends:
+    mtl,
+    ons-hs
+  other-modules:
+    ExampleAutomata,
+    IO
+
+executable ons-hs-lstar-perm
+  import: stuff
+  hs-source-dirs: app
+  main-is: LStarPerm.hs
   build-depends:
     mtl,
     ons-hs
@@ -97,6 +109,7 @@ test-suite ons-hs-test
   main-is: Spec.hs
   other-modules:
     SpecMap,
+    SpecPermutable,
     SpecSet,
     SpecUtils
   build-depends:

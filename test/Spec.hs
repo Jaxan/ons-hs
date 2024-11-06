@@ -10,6 +10,7 @@ import OrbitList (repeatRationals, size)
 import Support (Rat (..))
 
 import SpecMap
+import SpecPermutable
 import SpecSet
 import SpecUtils ()
 
@@ -17,7 +18,7 @@ main :: IO ()
 main = defaultMain allTests
 
 allTests :: TestTree
-allTests = testGroup "main" [setTests, mapTests, countingTests, qcTests]
+allTests = testGroup "main" [setTests, mapTests, countingTests, qcTests, permutableTests]
 
 -- Verifying that the number of orbits is correct. Up to length 7, because
 -- length 8 and longer take at least one second.

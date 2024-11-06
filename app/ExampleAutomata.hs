@@ -1,6 +1,7 @@
 {-# language DeriveGeneric #-}
 {-# language DerivingVia #-}
 {-# language FlexibleContexts #-}
+{-# language ImportQualifiedPost #-}
 {-# language RecordWildCards #-}
 {-# language UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
@@ -10,14 +11,16 @@ module ExampleAutomata
   , module Automata
   ) where
 
-import Nominal hiding (product)
 import Automata
+import EquivariantMap qualified as Map
+import EquivariantSet qualified as Set
 import IO
+import Nominal hiding (product)
 import OrbitList
-import qualified EquivariantMap as Map
-import qualified EquivariantSet as Set
+import Permutable
 
 import Data.Foldable (fold)
+import Data.Map.Strict qualified as Data.Map
 import GHC.Generics (Generic)
 import Prelude as P hiding (map, product, words, filter, foldr)
 
@@ -68,6 +71,11 @@ doubleWordAut n = Automaton {..} where
 data FifoA = Put Atom | Get Atom
   deriving (Eq, Ord, Show, Generic)
   deriving Nominal via Generically FifoA
+
+-- TODO: find a generic way to derive this.
+instance Permutable FifoA where
+  act (Permuted (Perm m) (Put p)) = Put $ Data.Map.findWithDefault p p m
+  act (Permuted (Perm m) (Get p)) = Get $ Data.Map.findWithDefault p p m
 
 instance ToStr FifoA where
   toStr (Put a) = "Put " ++ toStr a
