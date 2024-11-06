@@ -23,7 +23,7 @@ type Table a   = EquivariantMap (Word a) Bool
 
 
 -- Utility functions
-exists f = not . null . filter f 
+exists f = not . null . filter f
 forAll f = null . filter (not . f)
 ext p a = p <> [a]
 

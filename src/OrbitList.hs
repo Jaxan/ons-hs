@@ -63,6 +63,19 @@ repeatRationals :: Int -> OrbitList [Rat]
 repeatRationals 0 = singleOrbit []
 repeatRationals n = productWith (:) rationals (repeatRationals (n-1))
 
+distinctRationals :: Int -> OrbitList [Rat]
+distinctRationals 0 = singleOrbit []
+distinctRationals n = map (uncurry (:)) . OrbitList.separatedProduct rationals $ (distinctRationals (n-1))
+
+increasingRationals :: Int -> OrbitList [Rat]
+increasingRationals 0 = singleOrbit []
+increasingRationals n = map (uncurry (:)) . OrbitList.increasingProduct rationals $ (increasingRationals (n-1))
+
+-- Bell numbers
+repeatRationalUpToPerm :: Int -> OrbitList [Rat]
+repeatRationalUpToPerm 0 = singleOrbit []
+repeatRationalUpToPerm 1 = map pure rationals
+repeatRationalUpToPerm n = OrbitList.map (uncurry (:)) (OrbitList.increasingProduct rationals (repeatRationalUpToPerm (n-1))) <> OrbitList.map (uncurry (:)) (OrbitList.rightProduct rationals (repeatRationalUpToPerm (n-1)))
 
 -- Map / Filter / ...
 
@@ -92,8 +105,26 @@ foldl f b = L.foldl (\acc -> f acc . getElementE) b . unOrbitList
 
 -- Combinations
 
+productG :: (Nominal a, Nominal b) => (Proxy a -> Proxy b -> Orbit a -> Orbit b -> [OrbPair (OrbRec a) (OrbRec b)]) -> OrbitList a -> OrbitList b -> OrbitList (a, b)
+productG f (OrbitList as) (OrbitList bs) = OrbitList . concat $ (f (Proxy :: Proxy a) (Proxy :: Proxy b) <$> as <*> bs)
+
 product :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
-product (OrbitList as) (OrbitList bs) = OrbitList . concat $ (Nominal.product (Proxy :: Proxy a) (Proxy :: Proxy b) <$> as <*> bs)
+product = OrbitList.productG Nominal.product
+
+separatedProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
+separatedProduct = OrbitList.productG Nominal.separatedProduct
+
+leftProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
+leftProduct = OrbitList.productG Nominal.leftProduct
+
+rightProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
+rightProduct = OrbitList.productG Nominal.rightProduct
+
+increasingProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
+increasingProduct = OrbitList.productG Nominal.increasingProduct
+
+decreasingProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
+decreasingProduct = OrbitList.productG Nominal.decreasingProduct
 
 productWith :: (Nominal a, Nominal b, Nominal c) => (a -> b -> c) -> OrbitList a -> OrbitList b -> OrbitList c
 productWith f as bs = map (uncurry f) (OrbitList.product as bs)

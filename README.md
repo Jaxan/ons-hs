@@ -114,6 +114,9 @@ values, that can be much faster.
 
 ## Changelog
 
+version 0.3.0.0 (2024-11-06):
+* More types of products
+
 version 0.2.3.0 (2024-11-05):
 * Updates the testing and benchmarking framework.
 * Replaced benchmarking dependencies, making the build process much faster.
