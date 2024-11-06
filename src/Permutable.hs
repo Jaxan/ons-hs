@@ -78,5 +78,12 @@ instance Permutable (Permuted a) where
 instance Permutable Rat where
   act (Permuted (Perm m) p) = Map.findWithDefault p p m
 
+-- TODO: make all this generic
 instance Permutable a => Permutable [a] where
   act (Permuted f ls) = fmap (\x -> act (Permuted f x)) ls
+
+instance (Permutable a, Permutable b) => Permutable (a, b) where
+  act (Permuted f (a, b)) = (act (Permuted f a), act (Permuted f b))
+
+instance Permutable Bool where
+  act (Permuted _ b) = b

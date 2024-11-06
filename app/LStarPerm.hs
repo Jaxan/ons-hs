@@ -50,12 +50,12 @@ deriving instance Ord (Orbit k) => Monoid (PermEquivariantMap k v)
 deriving instance Ord (Orbit k) => Semigroup (PermEquivariantMap k v)
 
 lookupP :: (Permutable k, Nominal k, Nominal v, _) => k -> PermEquivariantMap k v -> Maybe v
-lookupP x (PEqMap m) = case catMaybes [Map.lookup (act px) m | px <- allPermuted x] of
-  [] -> Nothing
-  (v:_) -> Just v -- take first hit, maybe this is wrong? I guess for v ~ Bool it's fine?
+lookupP x (PEqMap m) = Map.lookup x m
 
+-- For this algorithm, we do more lookups than inserts, so we make the insert
+-- handle the permutations (at the cost of memory).
 insertP :: (Nominal k, Nominal v, _) => k -> v -> PermEquivariantMap k v -> PermEquivariantMap k v
-insertP k v = PEqMap . Map.insert k v . unPEqMap
+insertP k v = PEqMap . flip (Prelude.foldr (\(pk, pv) -> Map.insert pk pv)) [(pk, pv) | pkv <- allPermuted (k, v), let (pk, pv) = act pkv] . unPEqMap
 
 (!~) :: (Permutable k, Nominal k, Nominal v, _) => PermEquivariantMap k v -> k -> v
 (!~) m k = case lookupP k m of
