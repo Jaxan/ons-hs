@@ -56,3 +56,18 @@ instance FromStr a => FromStr [a] where
     where
       (a, str2) = fromStr str
       (l, emptyStr)    = fromStr (dropWhile isSpace str2)
+
+newtype MQ a = MQ a
+  deriving (Eq, Ord, Show)
+
+instance ToStr a => ToStr (MQ a) where
+  toStr (MQ a) = "MQ \"" <> toStr a <> "\""
+
+-- totally a hack, should do proper parsing at some point
+instance FromStr a => FromStr (MQ a) where
+  fromStr ('M':'Q':str) = let (a, rem) = fromStr (clean str) in (MQ a, rem)
+    where
+      trim str = dropWhile isSpace str
+      takeQ ('\"':rem) = rem
+      takeQ rem = error $ "parse error for MQ: " <> rem
+      clean = reverse . takeQ . trim . reverse . takeQ . trim

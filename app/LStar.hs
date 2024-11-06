@@ -153,9 +153,7 @@ learn mq eq = do
 -- Here is the teacher: just pose the queries in the terminal
 askMember :: _ => Word a -> IO Bool
 askMember w = do
-  putStr "MQ \""
-  putStr (toStr w)
-  putStrLn "\""
+  putStrLn (toStr (MQ w))
   hFlush stdout
   a <- getLine
   case a of
