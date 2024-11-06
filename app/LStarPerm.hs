@@ -1,6 +1,7 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE StandaloneDeriving #-}
@@ -8,22 +9,39 @@
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
 import Automata (Word)
+import EquivariantMap (EquivariantMap(..), (!))
+import EquivariantMap qualified as Map
+import EquivariantSet qualified as Set
 import ExampleAutomata
 import IO
-import Quotient
-import OrbitList
-import EquivariantMap (EquivariantMap(..), (!))
-import qualified EquivariantMap as Map
-import qualified EquivariantSet as Set
 import Nominal (Nominal, Orbit, Trivially(..))
+import OrbitList
 import Permutable
+import Quotient
 
+import Control.Monad.State
 import Data.List (tails)
 import Data.Maybe (catMaybes)
-import Control.Monad.State
-import System.IO (hFlush, stdout)
 import Prelude hiding (filter, null, elem, lookup, product, Word, map, take, init)
+import System.IO (hFlush, stdout)
 
+-- This is like the LStar algorithm in LStar.hs, but it skips membership
+-- queries which are permutations of ones already asked. This saves a lot of
+-- queries, but is slower computationally. The permutations are nicely hidden
+-- away in the PermEquivariantMap data structure, so that the learning
+-- algorithm is almost identical to the one in LStar.hs.
+--
+-- Some of the performance is regained, by using another product (now still
+-- "testProduct"). I am not 100% sure this is the correct way of doing it.
+-- It seems to work on the examples I tried. And I do think that something
+-- along these lines potentially works.
+--
+-- Another way forway would be to use the `Permuted` monad, also in the
+-- automaton type. But that requires more thinking.
+
+
+--------------------------------------------
+-- New data structure to handle permutations
 newtype PermEquivariantMap k v = PEqMap { unPEqMap :: EquivariantMap k v }
   deriving Nominal via Trivially (EquivariantMap k v)
 
@@ -44,6 +62,10 @@ insertP k v = PEqMap . Map.insert k v . unPEqMap
   Just v -> v
   Nothing -> error "Key not found (in PermEquivariantMap)"
 
+
+--------------------------------------------
+-- From here, it's almost exactly LStar.hs
+
 -- We use Lists, as they provide a bit more laziness
 type Rows a    = OrbitList (Word a)
 type Columns a = OrbitList (Word a)
@@ -57,7 +79,10 @@ ext p a = p <> [a]
 
 equalRows :: _ => Word a -> Word a -> Columns a -> Table a -> Bool
 equalRows t0 s0 suffs table =
-  forAll (\((t, s), e) -> lookupP (s ++ e) table == lookupP (t ++ e) table) $ product (singleOrbit (t0, s0)) suffs
+  -- I am not convinced this is right: the permutations applied here should
+  -- be the same I think. As it is currently stated the permutations to s and t
+  -- may be different.
+  forAll (\((t, s), e) -> lookupP (s ++ e) table == lookupP (t ++ e) table) $ testProduct (singleOrbit (t0, s0)) suffs
 
 closed :: _ => Word a -> Rows a -> Columns a -> Table a -> Bool
 closed t prefs suffs table =
@@ -71,8 +96,8 @@ inconsistencies :: _ => Rows a -> Columns a -> Table a -> OrbitList a -> OrbitLi
 inconsistencies prefs suffs table alph =
   filter (\((s, t), (a, e)) -> lookupP (s ++ (a:e)) table /= lookupP (t ++ (a:e)) table) candidatesExt
   where
-    candidates = filter (\(s, t) -> s < t && equalRows s t suffs table) (product prefs prefs)
-    candidatesExt = product candidates (product alph suffs)
+    candidates = filter (\(s, t) -> s < t && equalRows s t suffs table) (testProduct prefs prefs)
+    candidatesExt = testProduct candidates (product alph suffs)
 
 
 -- Main state of the L* algorithm

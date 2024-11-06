@@ -48,3 +48,7 @@ increasingProduct = productG incrSepProdStrings
 -- Strictly decreasing product = { (a,b) | all elements in a > elements in b }
 decreasingProduct :: (Nominal a, Nominal b) => Proxy a -> Proxy b -> Orbit a -> Orbit b -> [Orbit (a,b)]
 decreasingProduct = productG decrSepProdStrings
+
+-- Strictly decreasing product = { (a,b) | all elements in a > elements in b }
+testProduct :: (Nominal a, Nominal b) => Proxy a -> Proxy b -> Orbit a -> Orbit b -> [Orbit (a,b)]
+testProduct = productG testProdStrings

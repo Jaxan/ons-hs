@@ -56,6 +56,18 @@ decrSepProdStrings :: Alternative f => Int -> Int -> f [Ordering]
 decrSepProdStrings = memo2 gen where
   gen n m = pure $ replicate m GT <|> replicate n LT
 
+testProdStrings :: Alternative f => Int -> Int -> f [Ordering]
+testProdStrings = mgen (0 :: Int) where
+  mgen = memo3 gen
+  gen _ n 0 = pure $ replicate n LT
+  gen _ 0 n = pure $ replicate n GT
+  gen 0 n m = (LT :) <$> mgen 1 (n-1) m
+          <|> (EQ :) <$> mgen 0 (n-1) (m-1)
+  gen k n m = (LT :) <$> mgen (k+1) (n-1) m
+          <|> (EQ :) <$> mgen k (n-1) (m-1)
+          <|> (GT :) <$> mgen (k-1) n (m-1)
+
+
 {- NOTE on performance:
 Previously, I had INLINABLE and SPECIALIZE pragmas for all above definitions.
 But with benchmarking, I concluded that they do not make any difference. So
