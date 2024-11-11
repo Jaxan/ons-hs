@@ -11,7 +11,6 @@ import ExampleAutomata
 import IO
 import Nominal (Atom)
 import OrbitList qualified
-import Support (Rat (..))
 
 data Example
   = Fifo Int
@@ -19,7 +18,7 @@ data Example
 
 main :: IO ()
 main =
-  let ex = Fifo 2
+  let ex = DoubleWord 2
    in case ex of
         Fifo n -> teach "FIFO" (fifoFun n) (fifoCex n)
         DoubleWord n -> teach "ATOMS" (doubleFun n) (doubleCex n)

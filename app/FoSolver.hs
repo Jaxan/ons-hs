@@ -1,7 +1,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 import OrbitList hiding (head)
-import Support (Rat)
+import Nominal
 
 import Prelude (Show, Ord, Eq, Int, IO, print, otherwise, (.), ($), (!!), (+), (-), Bool, head, tail)
 import qualified Prelude as P
@@ -81,7 +81,7 @@ forAll p     = not (exists (not p))
 
 -- Here is the solver. It keeps track of a nominal set.
 -- If that sets is empty in the end, the formula does not hold.
-type Context = SortedOrbitList [Rat]
+type Context = SortedOrbitList [Atom]
 
 extend, drop :: Context -> Context
 extend ctx = productWith (:) rationals ctx

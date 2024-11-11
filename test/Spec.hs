@@ -5,10 +5,8 @@ import Test.Tasty.HUnit hiding (assert)
 import Test.Tasty.QuickCheck as QC
 import Prelude (Eq (..), IO, Int, length, show, (!!), ($), (<>))
 
-import Nominal (Nominal (..))
+import Nominal
 import OrbitList (repeatRationals, size)
-import Support (Rat (..))
-
 import SpecMap
 import SpecPermutable
 import SpecSet
@@ -31,4 +29,4 @@ a000670 = [1, 1, 3, 13, 75, 541, 4683, 47293, 545835, 7087261, 102247563, 162263
 
 -- TODO: Add more quickcheck tests
 qcTests :: TestTree
-qcTests = testGroup "QuickCheck" [QC.testProperty "all atoms in same orbit" $ \p q -> toOrbit (p :: Rat) == toOrbit (q :: Rat)]
+qcTests = testGroup "QuickCheck" [QC.testProperty "all atoms in same orbit" $ \p q -> toOrbit (p :: Atom) == toOrbit (q :: Atom)]

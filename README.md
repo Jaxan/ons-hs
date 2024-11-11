@@ -114,6 +114,11 @@ values, that can be much faster.
 
 ## Changelog
 
+version 0.4 (2024-11-11):
+* Changed from rational number to integers (for performance).
+* Cleaned up module structure and API.
+* Started writing some haddock.
+
 version 0.3.1.0 (2024-11-06):
 * More types of products
 * Stuff to do permutations (not only monotone ones)

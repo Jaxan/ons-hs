@@ -6,19 +6,18 @@
 {-# language UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 
+import EquivariantMap ((!))
 import ExampleAutomata
 import FileAutomata
 import IO
-import Quotient
 import OrbitList
-import EquivariantMap ((!))
+import Quotient
 import qualified EquivariantMap as Map
 import qualified EquivariantSet as Set
 
+import Prelude as P hiding (map, product, words, filter, foldr)
 import System.Environment
 import System.IO
-
-import Prelude as P hiding (map, product, words, filter, foldr)
 
 
 -- Version A: works on equivalence relations

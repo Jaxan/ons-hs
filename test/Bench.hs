@@ -8,22 +8,23 @@ import Test.Tasty.Bench
 import EquivariantMap
 import EquivariantSet
 import Nominal
+import Nominal.Atom
 import OrbitList (repeatRationals, size)
-import Support
 
-instance NFData Rat
+instance NFData Atom where
+  rnf = rwhnf . unAtom
 
 (\/) :: Ord (Orbit a) => EquivariantSet a -> EquivariantSet a -> EquivariantSet a
 (\/) = EquivariantSet.union
 
-bigset :: (Rat, Rat, Rat, _) -> Bool
+bigset :: (Atom, Atom, Atom, _) -> Bool
 bigset (p, q, r, t) = EquivariantSet.member t s
  where
   s1 = singleOrbit ((p, p), p) \/ singleOrbit ((p, p), q) \/ singleOrbit ((p, q), r)
   s2 = singleOrbit (p, q) \/ singleOrbit (q, r) \/ singleOrbit (r, p)
   s = EquivariantSet.product s1 s2
 
-bigmap :: (Rat, Rat, _) -> Maybe (Rat, (Rat, Rat))
+bigmap :: (Atom, Atom, _) -> Maybe (Atom, (Atom, Atom))
 bigmap (p, q, t) = EquivariantMap.lookup t m3
  where
   s = EquivariantSet.product (EquivariantSet.singleOrbit (p, q)) (EquivariantSet.singleOrbit (q, p))
@@ -38,18 +39,18 @@ main =
   defaultMain
     [ bgroup
         "bigmap"
-        [ bench "1 y" $ nf bigmap (Rat 1, Rat 2, (((Rat 1, Rat 23), (Rat 5, Rat 4)), ((Rat 2, Rat 3), (Rat 54, Rat 43)))) -- found
-        , bench "2 n" $ nf bigmap (Rat 1, Rat 2, (((Rat 1, Rat 23), (Rat 5, Rat 4)), ((Rat 2, Rat 3), (Rat 54, Rat 65)))) -- not found
-        , bench "3 y" $ nf bigmap (Rat 1, Rat 2, (((Rat 1, Rat 100), (Rat 90, Rat 20)), ((Rat 30, Rat 80), (Rat 70, Rat 65)))) -- found
-        , bench "4 y" $ nf bigmap (Rat 1, Rat 2, (((Rat 1, Rat 100), (Rat 100, Rat 1)), ((Rat 1, Rat 100), (Rat 100, Rat 1)))) -- found
-        , bench "5 y" $ nf bigmap (Rat 1, Rat 2, (((Rat 100, Rat 1), (Rat 1, Rat 100)), ((Rat 200, Rat 2), (Rat 2, Rat 200)))) -- found
+        [ bench "1 y" $ nf bigmap (atom 1, atom 2, (((atom 1, atom 23), (atom 5, atom 4)), ((atom 2, atom 3), (atom 54, atom 43)))) -- found
+        , bench "2 n" $ nf bigmap (atom 1, atom 2, (((atom 1, atom 23), (atom 5, atom 4)), ((atom 2, atom 3), (atom 54, atom 65)))) -- not found
+        , bench "3 y" $ nf bigmap (atom 1, atom 2, (((atom 1, atom 100), (atom 90, atom 20)), ((atom 30, atom 80), (atom 70, atom 65)))) -- found
+        , bench "4 y" $ nf bigmap (atom 1, atom 2, (((atom 1, atom 100), (atom 100, atom 1)), ((atom 1, atom 100), (atom 100, atom 1)))) -- found
+        , bench "5 y" $ nf bigmap (atom 1, atom 2, (((atom 100, atom 1), (atom 1, atom 100)), ((atom 200, atom 2), (atom 2, atom 200)))) -- found
         ]
     , bgroup
         "bigset"
-        [ bench "1 y" $ nf bigset (Rat 1, Rat 2, Rat 3, (((Rat 1, Rat 1), Rat 1), (Rat 1, Rat 2))) -- found
-        , bench "2 y" $ nf bigset (Rat 1, Rat 2, Rat 3, (((Rat 37, Rat 37), Rat 42), (Rat 1, Rat 2))) -- found
-        , bench "3 n" $ nf bigset (Rat 1, Rat 2, Rat 3, (((Rat 37, Rat 31), Rat 42), (Rat 1, Rat 2))) -- not found
-        , bench "4 y" $ nf bigset (Rat 1, Rat 2, Rat 3, (((Rat 1, Rat 2), Rat 3), (Rat 5, Rat 4))) -- found
+        [ bench "1 y" $ nf bigset (atom 1, atom 2, atom 3, (((atom 1, atom 1), atom 1), (atom 1, atom 2))) -- found
+        , bench "2 y" $ nf bigset (atom 1, atom 2, atom 3, (((atom 37, atom 37), atom 42), (atom 1, atom 2))) -- found
+        , bench "3 n" $ nf bigset (atom 1, atom 2, atom 3, (((atom 37, atom 31), atom 42), (atom 1, atom 2))) -- not found
+        , bench "4 y" $ nf bigset (atom 1, atom 2, atom 3, (((atom 1, atom 2), atom 3), (atom 5, atom 4))) -- found
         ]
     , bgroup
         "counting orbits"

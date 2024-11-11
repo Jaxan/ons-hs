@@ -17,9 +17,9 @@ import Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import OrbitList
-import Nominal (Atom)
+import Nominal
 import Nominal.Class
-import Support (Support, def)
+import Nominal.Support (def)
 import Automata
 import qualified EquivariantSet as Set
 import qualified EquivariantMap as Map

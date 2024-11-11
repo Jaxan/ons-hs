@@ -7,8 +7,6 @@ import Test.Tasty.HUnit hiding (assert)
 
 import Nominal
 import Permutable
-import Support (Rat (..))
-
 import SpecUtils
 
 permutableTests :: TestTree
@@ -21,7 +19,7 @@ assocTest n =
     assert and $
       [lhs f g == rhs f g | f <- perms, g <- perms]
  where
-  element = fmap (Rat . toRational) $ [1 .. n]
+  element = fmap atom $ [1 .. n]
   supp = support element
   perms = allPermutations supp
   lhs f g = act (Permuted (compose f g) element)

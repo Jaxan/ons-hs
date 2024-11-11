@@ -1,20 +1,21 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module EquivariantMap where
 
-import Data.Semigroup (Semigroup)
 import Data.Map (Map)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
+import Data.Semigroup (Semigroup)
 
 import EquivariantSet (EquivariantSet(..))
 import Nominal
-import Support
+import Nominal.Support as Support
 
 
 -- TODO: foldable / traversable
@@ -135,7 +136,7 @@ filter p (EqMap m) = EqMap (Map.filterWithKey p2 m)
 mapel :: (Nominal k, Nominal v) => k -> v -> (Orbit v, [Bool])
 mapel k v = (toOrbit v, bv (Support.toList (support k)) (Support.toList (support v)))
 
-bv :: [Rat] -> [Rat] -> [Bool]
+bv :: [Atom] -> [Atom] -> [Bool]
 bv l [] = replicate (length l) False
 bv [] _ = error "Non-equivariant function"
 bv (x:xs) (y:ys) = case compare x y of
@@ -144,5 +145,5 @@ bv (x:xs) (y:ys) = case compare x y of
   GT -> error "Non-equivariant function"
 
 mapelInv :: (Nominal k, Nominal v) => k -> (Orbit v, [Bool]) -> v
-mapelInv x (oy, bs) = getElement oy (Support.fromDistinctAscList . fmap fst . Prelude.filter snd $ zip (Support.toList (support x)) bs)
+mapelInv x (oy, bs) = getElement oy (fromDistinctAscList . fmap fst . Prelude.filter snd $ zip (Support.toList (support x)) bs)
 

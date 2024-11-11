@@ -1,13 +1,14 @@
-{-# language FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 module Quotient where
 
-import Nominal (Nominal(..))
-import Support (Support, intersect)
-import OrbitList
 import EquivariantMap (EquivariantMap)
-import qualified EquivariantMap as Map
+import EquivariantMap qualified as Map
 import EquivariantSet (EquivariantSet)
-import qualified EquivariantSet as Set
+import EquivariantSet qualified as Set
+import Nominal hiding (product)
+import Nominal.Support (intersect)
+import OrbitList
 
 import Prelude (Bool, Int, Ord, (.), (<>), (+), ($), fst, snd, fmap, uncurry)
 
@@ -32,7 +33,7 @@ quotientf :: (Nominal a, Ord (Orbit a))
 quotientf k f ls = go k Map.empty empty (toList ls)
   where
     go n phi acc []     = (phi, acc, n)
-    go n phi acc (a:as) = 
+    go n phi acc (a:as) =
       let y0 = filter (uncurry f) (product (singleOrbit a) (fromList as))
           y1 = filter (uncurry f) (product (singleOrbit a) (singleOrbit a))
           y2 = map (\(a1, a2) -> (a2, (n, support a1 `intersect` support a2))) (y1 <> y0)

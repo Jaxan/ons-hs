@@ -14,6 +14,7 @@ import qualified Data.Set as Set
 import Prelude hiding (map, product)
 
 import Nominal
+import Nominal.Products as Nominal
 import OrbitList (OrbitList(..))
 
 

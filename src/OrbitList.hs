@@ -13,7 +13,8 @@ import Data.Proxy
 import Prelude hiding (map, product)
 
 import Nominal
-import Support (Rat(..))
+import Nominal.Products as Nominal
+import Nominal.Class
 
 -- Similar to EquivariantSet, but merely a list structure. It is an
 -- equivariant data type, so the Nominal instance is trivial.
@@ -53,26 +54,26 @@ empty = OrbitList []
 singleOrbit :: Nominal a => a -> OrbitList a
 singleOrbit a = OrbitList [toOrbit a]
 
-rationals :: OrbitList Rat
-rationals = singleOrbit (Rat 0)
+rationals :: OrbitList Atom
+rationals = singleOrbit (atom 0)
 
 cons :: Nominal a => a -> OrbitList a -> OrbitList a
 cons a (OrbitList l) = OrbitList (toOrbit a : l)
 
-repeatRationals :: Int -> OrbitList [Rat]
+repeatRationals :: Int -> OrbitList [Atom]
 repeatRationals 0 = singleOrbit []
 repeatRationals n = productWith (:) rationals (repeatRationals (n-1))
 
-distinctRationals :: Int -> OrbitList [Rat]
+distinctRationals :: Int -> OrbitList [Atom]
 distinctRationals 0 = singleOrbit []
 distinctRationals n = map (uncurry (:)) . OrbitList.separatedProduct rationals $ (distinctRationals (n-1))
 
-increasingRationals :: Int -> OrbitList [Rat]
+increasingRationals :: Int -> OrbitList [Atom]
 increasingRationals 0 = singleOrbit []
 increasingRationals n = map (uncurry (:)) . OrbitList.increasingProduct rationals $ (increasingRationals (n-1))
 
 -- Bell numbers
-repeatRationalUpToPerm :: Int -> OrbitList [Rat]
+repeatRationalUpToPerm :: Int -> OrbitList [Atom]
 repeatRationalUpToPerm 0 = singleOrbit []
 repeatRationalUpToPerm 1 = map pure rationals
 repeatRationalUpToPerm n = OrbitList.map (uncurry (:)) (OrbitList.increasingProduct rationals (repeatRationalUpToPerm (n-1))) <> OrbitList.map (uncurry (:)) (OrbitList.rightProduct rationals (repeatRationalUpToPerm (n-1)))

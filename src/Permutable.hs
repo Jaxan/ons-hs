@@ -6,13 +6,13 @@ import Data.List (permutations)
 import Data.Map.Strict qualified as Map
 
 import Nominal
-import Support
+import Nominal.Support (toList)
 
 ---------------------------------
 ---------------------------------
 
 -- Invariant: No element occurs more than once
-newtype Perm = Perm (Map.Map Rat Rat)
+newtype Perm = Perm (Map.Map Atom Atom)
   deriving (Eq, Ord, Show)
 
 identity :: Perm
@@ -56,7 +56,7 @@ bind comp (Permuted f a) = case comp a of
   Permuted g b -> shrink $ Permuted (compose g f) b
 
 allPermutations :: Support -> [Perm]
-allPermutations (Support xs) = fmap (reduce . Perm . Map.fromList . zip xs) . permutations $ xs
+allPermutations xs = fmap (reduce . Perm . Map.fromList . zip (toList xs)) . permutations $ toList xs
 
 -- Returns a lazy list
 allPermuted :: Nominal a => a -> [Permuted a]
@@ -75,7 +75,7 @@ class Permutable a where
 instance Permutable (Permuted a) where
   act = join
 
-instance Permutable Rat where
+instance Permutable Atom where
   act (Permuted (Perm m) p) = Map.findWithDefault p p m
 
 -- TODO: make all this generic

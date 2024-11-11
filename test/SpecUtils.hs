@@ -5,11 +5,11 @@ module SpecUtils where
 import Test.Tasty.HUnit hiding (assert)
 import Test.Tasty.QuickCheck as QC
 
-import Support (Rat (..))
+import Nominal.Atom
 
 assert :: HasCallStack => (a -> Bool) -> a -> IO ()
 assert f x = assertBool "" (f x)
 
-instance Arbitrary Rat where
-  arbitrary = Rat <$> arbitrary
-  shrink (Rat p) = Rat <$> shrink p
+instance Arbitrary Atom where
+  arbitrary = atom <$> arbitrary
+  shrink (Atom p) = atom <$> shrink p

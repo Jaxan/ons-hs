@@ -6,11 +6,11 @@ import Data.Char (isSpace)
 import Data.Ratio
 import Data.List (intersperse)
 
-import Nominal
 import Automata
-import Support (Rat(..), Support(..))
-import OrbitList as L (toList)
 import EquivariantMap as M (toList)
+import Nominal
+import Nominal.Support as Support
+import OrbitList as L (toList)
 
 
 -- I do not want to give weird Show instances for basic types, so I create my
@@ -20,13 +20,11 @@ class FromStr a where fromStr :: String -> (a, String)
 
 -- Should always print integers, this is not a problem for the things we build
 -- from getElementE (since it returns elements with support from 1 to n).
-instance ToStr Rat where
-  toStr (Rat r) = case denominator r of
-    1 -> show (numerator r)
-    _ -> error "Can only show integers"
+instance ToStr Atom where
+  toStr = show
 
 instance ToStr Support where
-  toStr (Support s) = "{" ++ toStr s ++ "}"
+  toStr s = "{" ++ toStr (Support.toList s) ++ "}"
 
 instance ToStr Bool where toStr b = show b
 instance ToStr Int where toStr i = show i
@@ -46,8 +44,8 @@ instance (Nominal q, Nominal a, ToStr q, ToStr a) => ToStr (Automaton q a) where
        ", acceptance = " ++ toStr (M.toList acceptance) ++
        ", transition = " ++ toStr (M.toList transition) ++ " }"
 
-instance FromStr Rat where
-  fromStr str = (Rat (read l % 1), r)
+instance FromStr Atom where
+  fromStr str = (atom (read l), r)
     where (l, r) = break isSpace str
 
 instance FromStr a => FromStr [a] where
@@ -55,7 +53,7 @@ instance FromStr a => FromStr [a] where
   fromStr str = (a : l, emptyStr)
     where
       (a, str2) = fromStr str
-      (l, emptyStr)    = fromStr (dropWhile isSpace str2)
+      (l, emptyStr) = fromStr (dropWhile isSpace str2)
 
 newtype MQ a = MQ a
   deriving (Eq, Ord, Show)

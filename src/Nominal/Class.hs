@@ -20,7 +20,8 @@ import Data.Proxy (Proxy(..))
 import Data.Void
 import GHC.Generics
 
-import Support
+import Nominal.Atom
+import Nominal.Support as Support
 
 
 -- This is the main meat of the package. The Nominal typeclass, it gives us ways
@@ -45,8 +46,8 @@ class Nominal a where
 
 -- We can construct orbits from rational numbers. There is exactly one orbit,
 -- so this can be represented by the unit type.
-instance Nominal Rat where
-  type Orbit Rat = ()
+instance Nominal Atom where
+  type Orbit Atom = ()
   toOrbit _ = ()
   support r = Support.singleton r
   getElement _ s = Support.min s
