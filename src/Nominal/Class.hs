@@ -7,12 +7,19 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Nominal.Class
-  ( Nominal(..) -- typeclass
-  , Trivially(..) -- newtype wrapper for deriving instances
-  , Generically(..) -- newtype wrapper for deriving instances
-  , OrbPair(..) -- need to export?
-  , OrbRec(..)  -- need to export?
+module Nominal.Class (
+  -- * Nominal
+  -- $Nominal
+  Nominal(..),
+  -- ** Deriving trivial instances
+  -- $Trivial
+  Trivially(..),
+  -- ** Deriving generic instances
+  -- $Generic
+  Generically(..),
+  -- ** Implementation details
+  OrbPair(..),
+  OrbRec(..),
   ) where
 
 import Data.Kind (Type)
@@ -23,29 +30,56 @@ import GHC.Generics
 import Nominal.Atom
 import Nominal.Support as Support
 
+-- $Nominal
+-- The type of nominal sets here is sometimes referred to as the "total
+-- order symmetry", or "ordered atoms". The nominal sets in this setting are
+-- always "strong", meaning that there are no "local symmetries".
+--
+-- References:
+--
+-- * <https://arxiv.org/abs/1402.0897v2>
+-- * <https://arxiv.org/abs/1902.08414>
 
--- This is the main meat of the package. The Nominal typeclass, it gives us ways
--- to manipulate nominal elements in sets and maps. The type class has
--- associated data to represent an orbit of type a. This is often much easier
--- than the type a itself. For example, all orbits of Rat are equal.
--- Furthermore, we provide means to go back and forth between elements and
+-- | The Nominal typeclass gives us ways to manipulate nominal elements in sets
+-- and maps. The type class has an associated type to represent orbits of type
+-- @a@. This type @'Orbit' a@ is often much simpler than the type @a@ itself.
+-- For example, all orbits of 'Atom' are equal (because the set of atoms is a
+-- single orbit).
+--
+-- The type class provides means to go back and forth between elements and
 -- orbits, and we get to know their support size. For many manipulations we
--- need an Ord instance on the associated data type, this can often be
--- implemented, even when the type 'a' does not have an Ord instance.
+-- need an 'Ord' instance on the associated data type, this can often be
+-- implemented, even when the type @a@ does not have an 'Ord' instance.
+--
+-- There are two ways to derive instances for this class, via 'Trivially' or
+-- via 'Generically'. See below.
 --
 -- Laws / conditions:
--- * index . toOrbit == size . support
--- * getElement o s is defined if index o == Set.size s
+--
+-- - 1. @index . toOrbit == size . support@
+-- - 2. @toOrbit (getElement o supp) = o@ (if @supp@ has the right size)
+-- - 3. @getElement (toOrbit a) (support a) = a@
 class Nominal a where
+  -- | The type describing an orbit of type @a@.
   type Orbit a :: Type
+
+  -- | Maps an element to its orbit representation. In general, this maps
+  -- loses information about the input (namely the support).
   toOrbit    :: a -> Orbit a
+
+  -- | Returns the least support of an element.
   support    :: a -> Support
+
+  -- | Picks an element from the orbit with a given support.
   getElement :: Orbit a -> Support -> a
+
+  -- | The "atom dimension" of an orbit, it is the size of the support of any
+  -- of its elements.
   index      :: Proxy a -> Orbit a -> Int
 
 
--- We can construct orbits from rational numbers. There is exactly one orbit,
--- so this can be represented by the unit type.
+-- | The set of atoms consist of exactly one orbit. So the associated type
+-- is @()@.
 instance Nominal Atom where
   type Orbit Atom = ()
   toOrbit _ = ()
@@ -54,11 +88,11 @@ instance Nominal Atom where
   index _ _ = 1
 
 
--- Supports themselves are nominal. Note that this is a very important instance
--- as all other instances can reduce to this one (and perhaps the one for
--- products). 'Abstract types' in the original ONS library can be represented
--- directly as T = (Trivial Int, Support). The orbit of a given support is
--- completely specified by an integer.
+-- 'Support's themselves are nominal. Note that this is a very important
+-- instance as all other instances can reduce to this one (and perhaps the one
+-- for products). "Abstract types" in the original ONS (C++) library can be
+-- represented directly as @T = ('Int', 'Support')@. The orbit of a given
+-- support is completely specified by an integer (representing the size).
 instance Nominal Support where
   type Orbit Support = Int
   toOrbit s = Support.size s
@@ -67,16 +101,28 @@ instance Nominal Support where
   index _ n = n
 
 
+-- $Trivial
 -- Two general ways for deriving instances are provided:
+--
 -- 1. A trivial instance, where the group action is trivial. This means that
 --    each value is its own orbit and is supported by the empty set.
--- 2. A generic instance, this uses the GHC.Generis machinery. This will
---    derive ``the right'' instance based on the algebraic data type.
--- Neither of them is a default, so they should be derived using DerivingVia.
+--
+-- 2. A generic instance, this uses the "GHC.Generis" machinery. This will
+--    derive the right instance based on the algebraic data type.
+--
+-- Neither of them is a default, so they should be derived using @DerivingVia@.
 -- (Available from GHC 8.6.1.)
 
--- For the trivial action, each element is its own orbit and is supported
--- by the empty set.
+-- | For the trivial action, each element is its own orbit and is supported
+-- by the empty set. Use this as follows:
+--
+-- @
+--   {-# LANGUAGE DerivingVia, StandaloneDeriving #-}
+--   import GHC.Generics
+--   data Colour = Red | Blue | Green
+--
+--   deriving via Trivially MyType instance Nominal MyType
+-- @
 newtype Trivially a = Trivial a
 instance Nominal (Trivially a) where
   type Orbit (Trivially a) = a
@@ -95,6 +141,10 @@ deriving via Trivially Char instance Nominal Char
 deriving via Trivially Int instance Nominal Int -- NB: Trivial instance!
 deriving via Trivially Ordering instance Nominal Ordering
 
+
+-- $Generic
+-- For deriving generically, use the 'Generically'. For convenience, this
+-- helper type is re-exported from "GHC.Generics".
 
 -- The generic instance unfolds the algebraic data type in sums and products,
 -- these have their own instances defined below.

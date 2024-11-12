@@ -9,6 +9,9 @@ module Nominal (
   -- | Re-exports from "Nominal.Support".
   Support,
   -- * The Nominal type class
+  -- | Re-exports from "Nominal.Class". Both trivial and generic instances can
+  -- be derived (via 'Trivially' and 'Generically'). For information on how to
+  -- derive instances for the type class, go to "Nominal.Class".
   Nominal (..),
   Trivially (..),
   Generically (..),

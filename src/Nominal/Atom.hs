@@ -23,3 +23,20 @@ newtype Atom = Atom {unAtom :: Int}
 -- | Creates an atom with the value specified by the integer.
 atom :: Int -> Atom
 atom = Atom
+
+{- Notes:
+
+- This type originally started out as Haskell's 'Rational' type. But since
+  all representatives would be computed by the library (e.g., in
+  'EquivariantSet'), the chosen atoms were always integers. Even in the
+  applications, such as automata learning, it is always possible to chose
+  integers. For that reason, the type is changed to 'Int'.
+
+- The change from 'Rational' (which is 'Ration Integer', so a big number
+  type) to 'Int' did increase performance a little bit, around 5%. I guess
+  it also reduces the memory footprint, but I have not measured this.
+
+- Most of the computations work on 'Orbit's anyways, and do not require
+  any representatives.
+
+-}
