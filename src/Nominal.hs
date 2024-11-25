@@ -23,7 +23,6 @@ import Data.Proxy
 
 import Nominal.Atom
 import Nominal.Class
-import Nominal.Products
 import Nominal.Support
 
 -- | We can construct a "default" element from an orbit. In this case, the

@@ -6,7 +6,7 @@ import EquivariantMap (EquivariantMap)
 import EquivariantMap qualified as Map
 import EquivariantSet (EquivariantSet)
 import EquivariantSet qualified as Set
-import Nominal hiding (product)
+import Nominal
 import Nominal.Support (intersect)
 import OrbitList
 

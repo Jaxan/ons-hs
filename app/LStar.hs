@@ -21,6 +21,16 @@ type Rows a    = OrbitList (Word a)
 type Columns a = OrbitList (Word a)
 type Table a   = EquivariantMap (Word a) Bool
 
+-- We can compute the support of a row (content) as follows. But I do not know
+-- yet how to use this for L*. It sould be possible to optimise, if we know
+-- the exact support (at the time). The support here is the "memorable values".
+-- supportOfRow :: _ => Word a -> Columns a -> Table a -> Support
+-- supportOfRow s suffs table =
+--   let y1 = filter (\(s1, s2) -> equalRows s1 s2 suffs table) (product (singleOrbit s) (singleOrbit s))
+--       y2 = map (\(a1, a2) -> (a1, Support.intersect (support a1) (support a2))) y1
+--       m0 = Map.fromListWith (\s1 s2 -> (Support.intersect s1 s2)) . toList $ y2
+--    in m0 ! s
+
 
 -- Utility functions
 exists f = not . null . filter f

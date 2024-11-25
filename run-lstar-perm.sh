@@ -22,7 +22,7 @@ teacher=$(cabal list-bin ons-hs-teacher)
 mkfifo $queryfifo $answerfifo
 
 # run the teacher in the background
-$teacher < $queryfifo > $answerfifo &
+$teacher "$@" < $queryfifo > $answerfifo &
 
 # run the learning algorithm, measuring its time
 time $lstar > $queryfifo < $answerfifo

@@ -127,11 +127,6 @@ increasingProduct = OrbitList.productG Nominal.increasingProduct
 decreasingProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
 decreasingProduct = OrbitList.productG Nominal.decreasingProduct
 
--- Not yet the product I wish to have... That is why the name is so
--- non-informative.
-testProduct :: forall a b. (Nominal a, Nominal b) => OrbitList a -> OrbitList b -> OrbitList (a, b)
-testProduct = OrbitList.productG Nominal.testProduct
-
 productWith :: (Nominal a, Nominal b, Nominal c) => (a -> b -> c) -> OrbitList a -> OrbitList b -> OrbitList c
 productWith f as bs = map (uncurry f) (OrbitList.product as bs)
 

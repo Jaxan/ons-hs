@@ -31,10 +31,8 @@ import System.IO (hFlush, stdout)
 -- away in the PermEquivariantMap data structure, so that the learning
 -- algorithm is almost identical to the one in LStar.hs.
 --
--- Some of the performance is regained, by using another product (now still
--- "testProduct"). I am not 100% sure this is the correct way of doing it.
--- It seems to work on the examples I tried. And I do think that something
--- along these lines potentially works.
+-- Performance can be improved by using more sophisticated products. But I
+-- do not know which one to choose (which ones are corect).
 --
 -- Another way forway would be to use the `Permuted` monad, also in the
 -- automaton type. But that requires more thinking.
@@ -82,11 +80,11 @@ equalRows t0 s0 suffs table =
   -- I am not convinced this is right: the permutations applied here should
   -- be the same I think. As it is currently stated the permutations to s and t
   -- may be different.
-  forAll (\((t, s), e) -> lookupP (s ++ e) table == lookupP (t ++ e) table) $ testProduct (singleOrbit (t0, s0)) suffs
+  forAll (\((t, s), e) -> lookupP (s ++ e) table == lookupP (t ++ e) table) $ product (singleOrbit (t0, s0)) suffs
 
 closed :: _ => Word a -> Rows a -> Columns a -> Table a -> Bool
 closed t prefs suffs table =
-  exists (\(t, s) -> equalRows t s suffs table) (leftProduct (singleOrbit t) prefs)
+  exists (\(t, s) -> equalRows t s suffs table) (product (singleOrbit t) prefs)
 
 nonClosedness :: _ => Rows a -> Rows a -> Columns a -> Table a -> Rows a
 nonClosedness prefs prefsExt suffs table =
@@ -96,8 +94,8 @@ inconsistencies :: _ => Rows a -> Columns a -> Table a -> OrbitList a -> OrbitLi
 inconsistencies prefs suffs table alph =
   filter (\((s, t), (a, e)) -> lookupP (s ++ (a:e)) table /= lookupP (t ++ (a:e)) table) candidatesExt
   where
-    candidates = filter (\(s, t) -> s < t && equalRows s t suffs table) (testProduct prefs prefs)
-    candidatesExt = testProduct candidates (product alph suffs)
+    candidates = filter (\(s, t) -> s < t && equalRows s t suffs table) (product prefs prefs)
+    candidatesExt = product candidates (product alph suffs)
 
 
 -- Main state of the L* algorithm

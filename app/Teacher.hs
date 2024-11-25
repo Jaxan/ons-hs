@@ -11,17 +11,29 @@ import ExampleAutomata
 import IO
 import Nominal (Atom)
 import OrbitList qualified
+import System.Environment (getArgs)
 
-data Example
+-- The main function reads a command line argument, specifying the model. It
+-- defaults to a certain model, so you can leave it out. The models enumerated
+-- in 'ModelDescription' are supported.
+--
+-- (Equivalence queries are currently not implemented well, see commens below.)
+
+data ModelDescription
   = Fifo Int
   | DoubleWord Int
+  deriving (Show, Read)
 
 main :: IO ()
-main =
-  let ex = DoubleWord 2
-   in case ex of
-        Fifo n -> teach "FIFO" (fifoFun n) (fifoCex n)
-        DoubleWord n -> teach "ATOMS" (doubleFun n) (doubleCex n)
+main = do
+  ls <- getArgs
+  let model = case ls of
+        [x] -> read x
+        _ -> Fifo 2
+  hPutStrLn stderr $ "Teacher behaviour: " <> show model
+  case model of
+    Fifo n -> teach "FIFO" (fifoFun n) (fifoCex n)
+    DoubleWord n -> teach "ATOMS" (doubleFun n) (doubleCex n)
 
 teach :: (ToStr a, FromStr a, Show a) => String -> ([a] -> Bool) -> [[a]] -> IO ()
 teach alphStr fun cexes = do
@@ -55,7 +67,6 @@ teach alphStr fun cexes = do
       modifyIORef countMQ succ
       n <- readIORef countMQ
       log $ "MQ " <> show n <> ": " <> str <> " -> " <> show acc -- <> " (parsed as " <> show word <> ")"
-
     handleEQ str = do
       modifyIORef countEQ succ
       n <- readIORef countEQ

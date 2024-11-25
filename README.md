@@ -114,14 +114,14 @@ values, that can be much faster.
 
 ## Changelog
 
-version 0.4 (2024-11-11):
+version 0.4 (2024-11-25):
 * Changed from rational number to integers (for performance).
 * Cleaned up module structure and API.
-* Started writing some haddock.
+* Started writing some haddock documentation.
 
 version 0.3.1.0 (2024-11-06):
-* More types of products
-* Stuff to do permutations (not only monotone ones)
+* More types of products.
+* Stuff to do permutations (not only monotone ones).
 * New LStar variant, which can learn equivariant (wrt permutations) languages
   with fewer queries. But it is slower.
 
